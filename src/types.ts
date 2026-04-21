@@ -5,6 +5,6 @@ export interface GroceryItem {
   category: string;
   addedAt: string;
   expiresAt: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   status: 'fresh' | 'expiring' | 'expired';
 }

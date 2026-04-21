@@ -110,7 +110,7 @@ export default function App() {
       category: itemData.category || 'Other',
       addedAt: new Date().toISOString(),
       expiresAt: itemData.expiresAt || addDays(new Date(), 7).toISOString(),
-      imageUrl: itemData.imageUrl,
+      imageUrl: itemData.imageUrl || null, 
       status: 'fresh'
     };
     
