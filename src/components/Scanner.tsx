@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { analyzeGroceryImage, ScannedGrocery } from '../services/geminiService';
 
 interface ScannerProps {
-  onScan: (data: ScannedGrocery, image: string) => void;
+  onScan: (data: ScannedGrocery, image: string) => Promise<void> | void;
   onClose: () => void;
 }
 
@@ -55,13 +55,17 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
 
     setIsAnalyzing(true);
     const result = await analyzeGroceryImage(base64Data);
-    setIsAnalyzing(false);
 
     if (result) {
-      onScan(result, fullImageData);
+      try {
+        await onScan(result, fullImageData);
+      } catch (e: any) {
+        setError(e.message || "Failed to save item to database.");
+      }
     } else {
       setError("Could not identify the item. Please try again.");
     }
+    setIsAnalyzing(false);
   };
 
   return (

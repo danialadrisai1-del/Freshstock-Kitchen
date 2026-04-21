@@ -35,6 +35,7 @@ import { auth, db, googleProvider } from './firebase';
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -75,10 +76,20 @@ export default function App() {
   }, [user]);
   
   const handleSignIn = async () => {
+    setAuthError(null);
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Authentication error: ", error);
+      
+      // Provide a friendlier message for common iframe/domain errors
+      if (error.code === 'auth/unauthorized-domain') {
+        setAuthError("Unauthorized domain. Please add this app's URL to your Firebase Authorized Domains.");
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        setAuthError("Sign-in popup was closed before completion.");
+      } else {
+        setAuthError(error.message || "Failed to sign in. The preview environment might be blocking popups. Try opening the app in a new tab.");
+      }
     }
   };
 
@@ -101,12 +112,10 @@ export default function App() {
       status: 'fresh'
     };
     
-    try {
-      await setDoc(docRef, newItem);
-      setIsAddingManual(false);
-    } catch (error) {
-      console.error("Error adding item to Firestore: ", error);
-    }
+    // We do NOT suppress the error here so that the form UI can display it
+    await setDoc(docRef, newItem);
+    setIsAddingManual(false);
+    setIsScannerOpen(false); // Close scanner on successful save
   };
 
   const deleteItem = async (id: string) => {
@@ -156,6 +165,13 @@ export default function App() {
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Continue with Google
           </button>
+
+          {authError && (
+            <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm w-full text-left flex gap-3 border border-red-100">
+              <AlertTriangle className="shrink-0" size={18} />
+              <p>{authError}</p>
+            </div>
+          )}
         </motion.div>
       </div>
     );
@@ -379,15 +395,14 @@ export default function App() {
       <AnimatePresence>
         {isScannerOpen && (
           <Scanner 
-            onScan={(data, image) => {
-              addItem({
+            onScan={async (data, image) => {
+              await addItem({
                 name: data.name,
                 category: data.category,
                 quantity: data.quantity,
                 imageUrl: image,
                 expiresAt: addDays(new Date(), data.suggestedExpiryDays).toISOString()
               });
-              setIsScannerOpen(false);
             }} 
             onClose={() => setIsScannerOpen(false)} 
           />
@@ -415,24 +430,40 @@ function Dialog({ children, onClose }: { children: React.ReactNode, onClose: () 
   );
 }
 
-function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => void, onCancel: () => void }) {
+function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promise<void> | void, onCancel: () => void }) {
   const [formData, setFormData] = useState({
     name: '',
     quantity: '1',
     category: 'Pantry',
     expiryDays: '7'
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   return (
-    <form className="space-y-5" onSubmit={(e) => {
+    <form className="space-y-5" onSubmit={async (e) => {
       e.preventDefault();
-      onSubmit({
-        name: formData.name,
-        quantity: formData.quantity,
-        category: formData.category,
-        expiresAt: addDays(new Date(), parseInt(formData.expiryDays)).toISOString()
-      });
+      setIsSubmitting(true);
+      setSubmitError(null);
+      try {
+        await onSubmit({
+          name: formData.name,
+          quantity: formData.quantity,
+          category: formData.category,
+          expiresAt: addDays(new Date(), parseInt(formData.expiryDays)).toISOString()
+        });
+      } catch (err: any) {
+         setSubmitError(err.message || 'Failed to communicate with Firebase.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }}>
+      {submitError && (
+        <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100 flex items-start gap-3">
+          <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+          <p>{submitError}</p>
+        </div>
+      )}
       <div className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Item Name</label>
@@ -484,8 +515,10 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => void, 
         </div>
       </div>
       <div className="flex gap-3 pt-4">
-        <button type="button" onClick={onCancel} className="flex-1 px-6 py-4 rounded-2xl bg-neutral-100 font-bold hover:bg-neutral-200 transition-colors">Cancel</button>
-        <button type="submit" className="flex-1 px-6 py-4 rounded-2xl bg-neutral-950 text-white font-bold hover:bg-neutral-800 transition-colors">Add Item</button>
+        <button disabled={isSubmitting} type="button" onClick={onCancel} className="flex-1 px-6 py-4 rounded-2xl bg-neutral-100 font-bold hover:bg-neutral-200 transition-colors disabled:opacity-50">Cancel</button>
+        <button disabled={isSubmitting} type="submit" className="flex-1 px-6 py-4 rounded-2xl bg-neutral-950 text-white font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50">
+          {isSubmitting ? 'Adding...' : 'Add Item'}
+        </button>
       </div>
     </form>
   );
