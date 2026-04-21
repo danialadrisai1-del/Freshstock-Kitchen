@@ -455,29 +455,33 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!formData.name.trim()) {
-      setSubmitError("Please enter an item name.");
-      return;
-    }
-    if (!formData.quantity.trim()) {
-      setSubmitError("Please enter a quantity.");
-      return;
-    }
-    if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
-      setSubmitError("Please enter a valid number of days for expiry.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError(null);
     try {
+      if (!formData.name.trim()) {
+        alert("Please enter an item name.");
+        return;
+      }
+      if (!formData.quantity.trim()) {
+        alert("Please enter a quantity.");
+        return;
+      }
+      if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
+        alert("Please enter a valid number of days for expiry.");
+        return;
+      }
+
+      setIsSubmitting(true);
+      setSubmitError(null);
+      
       await onSubmit({
         name: formData.name,
         quantity: formData.quantity,
         category: formData.category,
         expiresAt: addDays(new Date(), parseInt(formData.expiryDays)).toISOString()
       });
+      
     } catch (err: any) {
+       console.error("Submit error caught:", err);
+       alert(err.message || "An unknown error occurred during save.");
        setSubmitError(err.message || 'Failed to communicate with Firebase.');
     } finally {
       setIsSubmitting(false);
