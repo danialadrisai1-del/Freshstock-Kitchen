@@ -450,6 +450,20 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
   return (
     <form className="space-y-5" onSubmit={async (e) => {
       e.preventDefault();
+      
+      if (!formData.name.trim()) {
+        setSubmitError("Please enter an item name.");
+        return;
+      }
+      if (!formData.quantity.trim()) {
+        setSubmitError("Please enter a quantity.");
+        return;
+      }
+      if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
+        setSubmitError("Please enter a valid number of days for expiry.");
+        return;
+      }
+
       setIsSubmitting(true);
       setSubmitError(null);
       try {
@@ -476,7 +490,6 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
           <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Item Name</label>
           <input 
             autoFocus
-            required
             className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
             value={formData.name}
             onChange={e => setFormData({...formData, name: e.target.value})}
@@ -487,7 +500,6 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Quantity</label>
             <input 
-              required
               className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
               value={formData.quantity}
               onChange={e => setFormData({...formData, quantity: e.target.value})}
@@ -497,7 +509,6 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
             <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Expires in (Days)</label>
             <input 
               type="number"
-              required
               className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
               value={formData.expiryDays}
               onChange={e => setFormData({...formData, expiryDays: e.target.value})}
