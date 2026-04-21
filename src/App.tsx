@@ -84,9 +84,11 @@ export default function App() {
       
       // Provide a friendlier message for common iframe/domain errors
       if (error.code === 'auth/unauthorized-domain') {
-        setAuthError("Unauthorized domain. Please add this app's URL to your Firebase Authorized Domains.");
+        setAuthError("Unauthorized domain. Please add this app's URL to your Firebase Authorized Domains in the Firebase Console.");
       } else if (error.code === 'auth/popup-closed-by-user') {
         setAuthError("Sign-in popup was closed before completion.");
+      } else if (error.message && error.message.includes('missing initial state')) {
+        setAuthError("Browser storage is blocked inside this preview window. To log in, please click the settings gear (top right of this preview) and select 'Open App in new tab'.");
       } else {
         setAuthError(error.message || "Failed to sign in. The preview environment might be blocking popups. Try opening the app in a new tab.");
       }
