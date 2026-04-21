@@ -57,14 +57,17 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
     const result = await analyzeGroceryImage(base64Data);
 
     if (result) {
+      let timeoutId: NodeJS.Timeout;
       try {
         const scanPromise = onScan(result, fullImageData);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
+        const timeoutPromise = new Promise<void>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
         });
         await Promise.race([scanPromise, timeoutPromise]);
       } catch (e: any) {
         setError(e.message || "Failed to save item to database.");
+      } finally {
+        if (timeoutId!) clearTimeout(timeoutId);
       }
     } else {
       setError("Could not identify the item. Please try again.");

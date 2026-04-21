@@ -116,12 +116,17 @@ export default function App() {
     
     // We do NOT suppress the error here so that the form UI can display it
     // Firebase hangs indefinitely if the DB doesn't exist, so we add a timeout.
+    let timeoutId: NodeJS.Timeout;
     const savePromise = setDoc(docRef, newItem);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
     });
 
-    await Promise.race([savePromise, timeoutPromise]);
+    try {
+      await Promise.race([savePromise, timeoutPromise]);
+    } finally {
+      clearTimeout(timeoutId!);
+    }
 
     setIsAddingManual(false);
     setIsScannerOpen(false); // Close scanner on successful save
@@ -449,38 +454,38 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  return (
-    <form className="space-y-5" onSubmit={async (e) => {
-      e.preventDefault();
-      
-      if (!formData.name.trim()) {
-        setSubmitError("Please enter an item name.");
-        return;
-      }
-      if (!formData.quantity.trim()) {
-        setSubmitError("Please enter a quantity.");
-        return;
-      }
-      if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
-        setSubmitError("Please enter a valid number of days for expiry.");
-        return;
-      }
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) {
+      setSubmitError("Please enter an item name.");
+      return;
+    }
+    if (!formData.quantity.trim()) {
+      setSubmitError("Please enter a quantity.");
+      return;
+    }
+    if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
+      setSubmitError("Please enter a valid number of days for expiry.");
+      return;
+    }
 
-      setIsSubmitting(true);
-      setSubmitError(null);
-      try {
-        await onSubmit({
-          name: formData.name,
-          quantity: formData.quantity,
-          category: formData.category,
-          expiresAt: addDays(new Date(), parseInt(formData.expiryDays)).toISOString()
-        });
-      } catch (err: any) {
-         setSubmitError(err.message || 'Failed to communicate with Firebase.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    }}>
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      await onSubmit({
+        name: formData.name,
+        quantity: formData.quantity,
+        category: formData.category,
+        expiresAt: addDays(new Date(), parseInt(formData.expiryDays)).toISOString()
+      });
+    } catch (err: any) {
+       setSubmitError(err.message || 'Failed to communicate with Firebase.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
       {submitError && (
         <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100 flex items-start gap-3">
           <AlertTriangle size={18} className="shrink-0 mt-0.5" />
@@ -492,7 +497,7 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
           <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Item Name</label>
           <input 
             autoFocus
-            className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
+            className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all text-neutral-900"
             value={formData.name}
             onChange={e => setFormData({...formData, name: e.target.value})}
             placeholder="Milk, Eggs, etc."
@@ -502,7 +507,7 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Quantity</label>
             <input 
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all text-neutral-900"
               value={formData.quantity}
               onChange={e => setFormData({...formData, quantity: e.target.value})}
             />
@@ -511,7 +516,7 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
             <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Expires in (Days)</label>
             <input 
               type="number"
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all text-neutral-900"
               value={formData.expiryDays}
               onChange={e => setFormData({...formData, expiryDays: e.target.value})}
             />
@@ -520,7 +525,7 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
         <div className="space-y-1.5">
           <label className="text-xs font-bold uppercase tracking-wider text-neutral-400 ml-1">Category</label>
           <select 
-            className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all"
+            className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all text-neutral-900"
             value={formData.category}
             onChange={e => setFormData({...formData, category: e.target.value})}
           >
@@ -536,11 +541,11 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
       </div>
       <div className="flex gap-3 pt-4">
         <button disabled={isSubmitting} type="button" onClick={onCancel} className="flex-1 px-6 py-4 rounded-2xl bg-neutral-100 font-bold hover:bg-neutral-200 transition-colors disabled:opacity-50">Cancel</button>
-        <button disabled={isSubmitting} type="submit" className="flex-1 px-6 py-4 rounded-2xl bg-neutral-950 text-white font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50">
+        <button disabled={isSubmitting} type="button" onClick={handleSubmit} className="flex-1 px-6 py-4 rounded-2xl bg-neutral-950 text-white font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50">
           {isSubmitting ? 'Adding...' : 'Add Item'}
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 
