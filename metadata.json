@@ -1,0 +1,6 @@
+{
+  "name": "FreshStock: Kitchen Inventory",
+  "description": "Track your grocery stock with image capture, manual entry, and smart expiry alerts.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}
