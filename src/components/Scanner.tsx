@@ -58,7 +58,11 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
 
     if (result) {
       try {
-        await onScan(result, fullImageData);
+        const scanPromise = onScan(result, fullImageData);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
+        });
+        await Promise.race([scanPromise, timeoutPromise]);
       } catch (e: any) {
         setError(e.message || "Failed to save item to database.");
       }

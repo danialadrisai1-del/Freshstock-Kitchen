@@ -98,7 +98,7 @@ export default function App() {
   };
 
   const addItem = async (itemData: Partial<GroceryItem>) => {
-    if (!user) return;
+    if (!user) throw new Error("No authenticated user.");
     
     const docRef = doc(collection(db, 'users', user.uid, 'inventory'));
     const newItem: GroceryItem = {
@@ -113,7 +113,14 @@ export default function App() {
     };
     
     // We do NOT suppress the error here so that the form UI can display it
-    await setDoc(docRef, newItem);
+    // Firebase hangs indefinitely if the DB doesn't exist, so we add a timeout.
+    const savePromise = setDoc(docRef, newItem);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
+    });
+
+    await Promise.race([savePromise, timeoutPromise]);
+
     setIsAddingManual(false);
     setIsScannerOpen(false); // Close scanner on successful save
   };
