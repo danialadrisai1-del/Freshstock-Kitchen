@@ -42,6 +42,8 @@ export default function App() {
   const [isAddingManual, setIsAddingManual] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'fresh' | 'expiring' | 'expired'>('all');
+  
+  const [theme, setTheme] = useState<'default' | 'bento' | 'brutalist' | 'dark' | 'soft'>('default');
 
   // Handle Authentication
   useEffect(() => {
@@ -203,42 +205,81 @@ export default function App() {
   const expiredCount = items.filter(i => getStatus(i.expiresAt) === 'expired').length;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] font-sans text-neutral-900 pb-20">
+    <div className={`min-h-screen pb-20 ${
+      theme === 'dark' ? 'bg-neutral-950 text-neutral-100 font-sans' : 
+      theme === 'brutalist' ? 'bg-white text-black font-mono' : 
+      theme === 'soft' ? 'bg-[#FFF7ED] text-stone-800 font-sans' : 
+      'bg-[#F5F5F0] font-sans text-neutral-900'
+    }`}>
+      {/* Theme Switcher Banner for preview purposes */}
+      <div className="bg-indigo-600 text-white w-full py-2 px-4 shadow-md sticky top-0 z-50 flex items-center justify-between text-xs sm:text-sm font-sans">
+        <div className="flex items-center gap-2">
+          <Palette size={16} />
+          <span className="font-medium hidden sm:inline">Theme Previewer:</span>
+        </div>
+        <div className="flex gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+          {(['default', 'bento', 'brutalist', 'soft', 'dark'] as const).map(t => (
+            <button 
+              key={t}
+              onClick={() => setTheme(t)}
+              className={`px-3 py-1 rounded-full capitalize whitespace-nowrap transition-all ${theme === t ? 'bg-white text-indigo-600 font-bold' : 'bg-indigo-500/50 hover:bg-indigo-500 text-white/90'}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white border-b border-neutral-200 px-6 py-8 md:py-12">
+      <header className={`${
+        theme === 'dark' ? 'bg-neutral-900/50 border-b border-neutral-800 backdrop-blur-md' :
+        theme === 'brutalist' ? 'bg-white border-b-4 border-black' :
+        theme === 'soft' ? 'bg-[#FFEDD5] border-b border-[#FDBA74]' :
+        'bg-white border-b border-neutral-200'
+      } px-6 py-8 md:py-12 transition-colors`}>
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-neutral-400 font-medium tracking-tight uppercase text-xs">
+            <div className={`flex items-center justify-between`}>
+              <div className={`flex items-center gap-3 font-medium tracking-tight uppercase text-xs ${theme === 'dark' ? 'text-neutral-500' : theme === 'brutalist' ? 'text-black font-bold' : theme === 'soft' ? 'text-orange-900/60' : 'text-neutral-400'}`}>
                 <UtensilsCrossed size={16} />
                 <span>FreshStock Kitchen</span>
               </div>
               <button 
                 onClick={handleSignOut}
-                className="md:hidden p-2 text-neutral-400 hover:text-neutral-900 bg-neutral-50 rounded-full"
+                className={`md:hidden p-2 rounded-full ${theme === 'dark' ? 'text-neutral-400 bg-neutral-900' : theme === 'brutalist' ? 'text-white bg-black border-2 border-black' : theme === 'soft' ? 'text-orange-900 bg-orange-200/50' : 'text-neutral-400 hover:text-neutral-900 bg-neutral-50'}`}
                 title="Sign out"
               >
                 <LogOut size={16} />
               </button>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-serif tracking-tight text-neutral-900 leading-none">
+            <h1 className={`text-4xl md:text-5xl tracking-tight leading-none ${theme === 'dark' ? 'text-white font-sans font-light' : theme === 'brutalist' ? 'text-black font-mono font-black uppercase' : theme === 'soft' ? 'text-stone-900 font-serif font-medium' : 'text-neutral-900 font-serif'}`}>
               Your Pantry, <br />
-              <span className="italic">Perfectly Tracked</span>
+              <span className={theme === 'brutalist' ? 'bg-yellow-300 px-1' : theme === 'soft' || theme === 'default' ? 'italic' : 'font-semibold'}>Perfectly Tracked</span>
             </h1>
           </div>
           
           <div className="flex gap-3 items-center">
             <button 
               onClick={() => setIsAddingManual(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-neutral-100 font-medium hover:bg-neutral-200 transition-colors"
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 transition-colors ${
+                theme === 'dark' ? 'bg-neutral-800 text-white rounded-2xl hover:bg-neutral-700' :
+                theme === 'brutalist' ? 'bg-white text-black border-2 border-black rounded-none hover:bg-neutral-100 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all' :
+                theme === 'soft' ? 'bg-orange-100 text-orange-900 rounded-3xl hover:bg-orange-200 font-medium' :
+                'rounded-full bg-neutral-100 font-medium hover:bg-neutral-200'
+              }`}
             >
               <Plus size={18} />
               <span>Add Manual</span>
             </button>
             <button 
               onClick={() => setIsScannerOpen(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-neutral-950 text-white font-medium hover:bg-neutral-800 transition-all shadow-lg hover:shadow-xl active:scale-95"
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 transition-all active:scale-95 ${
+                theme === 'dark' ? 'bg-indigo-600 text-white rounded-2xl hover:bg-indigo-500 shadow-lg shadow-indigo-500/20' :
+                theme === 'brutalist' ? 'bg-black text-white border-2 border-black rounded-none font-bold hover:bg-neutral-800' :
+                theme === 'soft' ? 'bg-orange-500 text-white rounded-3xl hover:bg-orange-600 font-medium shadow-md shadow-orange-500/30' :
+                'rounded-full bg-neutral-950 text-white font-medium hover:bg-neutral-800 shadow-lg hover:shadow-xl'
+              }`}
             >
               <Camera size={18} />
               <span>Scan Item</span>
@@ -246,7 +287,12 @@ export default function App() {
             
             <button 
               onClick={handleSignOut}
-              className="hidden md:flex p-3 text-neutral-400 hover:text-neutral-900 bg-neutral-50 rounded-full hover:bg-neutral-200 transition-colors ml-2"
+              className={`hidden md:flex p-3 transition-colors ml-2 ${
+                theme === 'dark' ? 'bg-neutral-800 text-neutral-400 hover:text-white rounded-2xl' :
+                theme === 'brutalist' ? 'bg-black text-white border-2 border-black rounded-none' :
+                theme === 'soft' ? 'bg-orange-200/50 text-orange-900 hover:bg-orange-200 rounded-full' :
+                'text-neutral-400 hover:text-neutral-900 bg-neutral-50 rounded-full hover:bg-neutral-200'
+              }`}
               title="Sign out"
             >
               <LogOut size={18} />
@@ -263,14 +309,34 @@ export default function App() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex-1 bg-amber-50 border border-amber-200 p-6 rounded-3xl flex items-start gap-4"
+                className={`flex-1 p-6 flex items-start gap-4 ${
+                  theme === 'dark' ? 'bg-amber-500/10 border border-amber-500/20 rounded-2xl' :
+                  theme === 'brutalist' ? 'bg-white border-4 border-black rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' :
+                  theme === 'soft' ? 'bg-orange-100 border border-orange-200 rounded-3xl' :
+                  'bg-amber-50 border border-amber-200 rounded-3xl'
+                }`}
               >
-                <div className="p-2 bg-amber-100 rounded-xl text-amber-600">
+                <div className={`p-2 rounded-xl ${
+                  theme === 'dark' ? 'bg-amber-500/20 text-amber-400' :
+                  theme === 'brutalist' ? 'bg-black text-white rounded-none border-2 border-black' :
+                  theme === 'soft' ? 'bg-orange-200 text-orange-600 rounded-full' :
+                  'bg-amber-100 text-amber-600'
+                }`}>
                   <AlertTriangle size={20} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-amber-900">{expiringSoonCount} item{expiringSoonCount > 1 ? 's' : ''} expiring soon</h3>
-                  <p className="text-sm text-amber-700 opacity-80">Consume these within the next 3 days to avoid waste.</p>
+                  <h3 className={`font-semibold ${
+                    theme === 'dark' ? 'text-amber-400' :
+                    theme === 'brutalist' ? 'text-black font-black uppercase' :
+                    theme === 'soft' ? 'text-orange-900' :
+                    'text-amber-900'
+                  }`}>{expiringSoonCount} item{expiringSoonCount > 1 ? 's' : ''} expiring soon</h3>
+                  <p className={`text-sm opacity-80 ${
+                    theme === 'dark' ? 'text-amber-500/80' :
+                    theme === 'brutalist' ? 'text-black font-bold' :
+                    theme === 'soft' ? 'text-orange-800' :
+                    'text-amber-700'
+                  }`}>Consume these within the next 3 days to avoid waste.</p>
                 </div>
               </motion.div>
             )}
@@ -278,14 +344,34 @@ export default function App() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex-1 bg-red-50 border border-red-200 p-6 rounded-3xl flex items-start gap-4"
+                className={`flex-1 p-6 flex items-start gap-4 ${
+                  theme === 'dark' ? 'bg-red-500/10 border border-red-500/20 rounded-2xl' :
+                  theme === 'brutalist' ? 'bg-red-500 border-4 border-black rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]' :
+                  theme === 'soft' ? 'bg-red-100 border border-red-200 rounded-3xl' :
+                  'bg-red-50 border border-red-200 rounded-3xl'
+                }`}
               >
-                <div className="p-2 bg-red-100 rounded-xl text-red-600">
+                <div className={`p-2 rounded-xl ${
+                  theme === 'dark' ? 'bg-red-500/20 text-red-400' :
+                  theme === 'brutalist' ? 'bg-black text-white rounded-none border-2 border-black' :
+                  theme === 'soft' ? 'bg-red-200 text-red-600 rounded-full' :
+                  'bg-red-100 text-red-600'
+                }`}>
                   <Clock size={20} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-red-900">{expiredCount} item{expiredCount > 1 ? 's' : ''} expired</h3>
-                  <p className="text-sm text-red-700 opacity-80">Check these items before using them.</p>
+                  <h3 className={`font-semibold ${
+                    theme === 'dark' ? 'text-red-400' :
+                    theme === 'brutalist' ? 'text-black font-black uppercase' :
+                    theme === 'soft' ? 'text-red-900' :
+                    'text-red-900'
+                  }`}>{expiredCount} item{expiredCount > 1 ? 's' : ''} expired</h3>
+                  <p className={`text-sm opacity-80 ${
+                    theme === 'dark' ? 'text-red-500/80' :
+                    theme === 'brutalist' ? 'text-black font-bold' :
+                    theme === 'soft' ? 'text-red-800' :
+                    'text-red-700'
+                  }`}>Check these items before using them.</p>
                 </div>
               </motion.div>
             )}
@@ -295,16 +381,27 @@ export default function App() {
         {/* Dashboard/Filter */}
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-2xl font-serif italic text-neutral-800">Inventory</h2>
+            <h2 className={`text-2xl ${
+              theme === 'dark' ? 'text-white font-sans font-medium' :
+              theme === 'brutalist' ? 'text-black font-mono font-black uppercase' :
+              theme === 'soft' ? 'text-stone-900 font-serif font-medium' :
+              'font-serif italic text-neutral-800'
+            }`}>Inventory</h2>
             <div className="flex flex-wrap gap-2">
               {(['all', 'fresh', 'expiring', 'expired'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    filter === f 
-                    ? 'bg-neutral-900 text-white ring-4 ring-neutral-900/10' 
-                    : 'bg-white text-neutral-500 hover:bg-neutral-200 border border-neutral-200'
+                  className={`px-4 py-1.5 text-sm font-medium transition-all ${
+                    theme === 'dark' ? (
+                      filter === f ? 'bg-indigo-600 text-white rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)]' : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:bg-neutral-800 rounded-xl'
+                    ) : theme === 'brutalist' ? (
+                      filter === f ? 'bg-black text-white border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-black border-2 border-black rounded-none hover:bg-neutral-100 hover:-translate-y-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                    ) : theme === 'soft' ? (
+                      filter === f ? 'bg-orange-500 text-white rounded-full shadow-md shadow-orange-500/20' : 'bg-white text-orange-900/60 hover:bg-orange-50 border border-orange-200 rounded-full'
+                    ) : (
+                      filter === f ? 'bg-neutral-900 text-white ring-4 ring-neutral-900/10 rounded-full' : 'bg-white text-neutral-500 hover:bg-neutral-200 border border-neutral-200 rounded-full'
+                    )
                   }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -315,13 +412,22 @@ export default function App() {
 
           {/* Search */}
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-neutral-900 transition-colors" size={20} />
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${
+              theme === 'dark' ? 'text-neutral-500 group-focus-within:text-white' :
+              theme === 'brutalist' ? 'text-black font-bold' :
+              'text-neutral-400 group-focus-within:text-neutral-900'
+            }`} size={20} />
             <input 
               type="text" 
               placeholder="Search your stock..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-neutral-200 rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 transition-all text-neutral-900 placeholder:text-neutral-300"
+              className={`w-full py-4 pl-12 pr-6 outline-none transition-all ${
+                theme === 'dark' ? 'bg-neutral-900 border border-neutral-800 text-white rounded-2xl focus:border-indigo-500 focus:bg-neutral-800 placeholder:text-neutral-600' :
+                theme === 'brutalist' ? 'bg-white border-4 border-black text-black rounded-none focus:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] placeholder:text-black/40 font-mono font-bold' :
+                theme === 'soft' ? 'bg-white border border-orange-200 text-stone-900 rounded-full focus:ring-4 focus:ring-orange-500/10 focus:border-orange-400 placeholder:text-orange-900/30 shadow-sm' :
+                'bg-white border border-neutral-200 rounded-2xl focus:ring-4 focus:ring-neutral-900/5 focus:border-neutral-900 text-neutral-900 placeholder:text-neutral-300'
+              }`}
             />
           </div>
 
@@ -336,43 +442,65 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white p-6 rounded-[2rem] border border-neutral-200 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between"
+                    className={`${
+                      theme === 'dark' ? 'bg-neutral-900 border-neutral-800 rounded-2xl hover:bg-neutral-800/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]' :
+                      theme === 'brutalist' ? 'bg-white border-4 border-black rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' :
+                      theme === 'soft' ? 'bg-white rounded-3xl border-orange-100 shadow-sm hover:shadow-orange-100/50 hover:shadow-md' :
+                      'bg-white rounded-[2rem] border-neutral-200 shadow-sm hover:shadow-md'
+                    } p-6 border transition-all group flex flex-col justify-between`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex gap-4">
                         {item.imageUrl ? (
-                          <div className="w-16 h-16 rounded-2xl overflow-hidden border border-neutral-100 shrink-0">
+                          <div className={`w-16 h-16 overflow-hidden shrink-0 ${theme === 'dark' ? 'rounded-xl border-neutral-800' : theme === 'brutalist' ? 'border-2 border-black rounded-none' : 'rounded-2xl border-neutral-100'} border`}>
                             <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" referrerPolicy='no-referrer' />
                           </div>
                         ) : (
-                          <div className="w-16 h-16 rounded-2xl bg-neutral-50 flex items-center justify-center text-neutral-300 shrink-0">
+                          <div className={`w-16 h-16 flex items-center justify-center shrink-0 ${
+                            theme === 'dark' ? 'bg-neutral-800 text-neutral-600 rounded-xl' :
+                            theme === 'brutalist' ? 'bg-neutral-100 border-2 border-black text-black rounded-none' :
+                            theme === 'soft' ? 'bg-orange-50 text-orange-300 rounded-2xl' :
+                            'bg-neutral-50 text-neutral-300 rounded-2xl'
+                          }`}>
                             <Package size={24} />
                           </div>
                         )}
                         <div>
-                          <h3 className="font-bold text-lg leading-tight">{item.name}</h3>
-                          <p className="text-neutral-400 text-sm font-medium">{item.category}</p>
+                          <h3 className={`font-bold text-lg leading-tight ${theme === 'brutalist' ? 'uppercase font-black' : ''}`}>{item.name}</h3>
+                          <p className={`text-sm font-medium ${theme === 'dark' ? 'text-neutral-500' : theme === 'brutalist' ? 'text-black/60 font-bold' : theme === 'soft' ? 'text-orange-900/40' : 'text-neutral-400'}`}>{item.category}</p>
                         </div>
                       </div>
                       <button 
                         onClick={() => deleteItem(item.id)}
-                        className="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl"
+                        className={`p-2 transition-all ${
+                          theme === 'dark' ? 'text-neutral-600 hover:text-red-400 hover:bg-neutral-800 rounded-xl' :
+                          theme === 'brutalist' ? 'text-black border-2 border-transparent hover:border-black hover:bg-red-500 hover:text-white rounded-none' :
+                          theme === 'soft' ? 'text-orange-200 hover:text-red-500 hover:bg-red-50 rounded-full' :
+                          'text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-xl'
+                        }`}
                       >
                         <Trash2 size={18} />
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between mt-4 py-3 px-4 bg-neutral-50 rounded-2xl">
-                      <div className="flex items-center gap-2 text-sm text-neutral-500 font-medium">
+                    <div className={`flex items-center justify-between mt-4 py-3 px-4 ${
+                      theme === 'dark' ? 'bg-neutral-950/50 rounded-xl' :
+                      theme === 'brutalist' ? 'bg-neutral-100 border-t-2 border-black border-dashed rounded-none -mx-6 -mb-6 px-6 pt-4 pb-4' :
+                      theme === 'soft' ? 'bg-orange-50/50 rounded-2xl' :
+                      'bg-neutral-50 rounded-2xl'
+                    }`}>
+                      <div className={`flex items-center gap-2 text-sm font-medium ${theme === 'dark' ? 'text-neutral-400' : theme === 'brutalist' ? 'text-black font-bold uppercase' : 'text-neutral-500'}`}>
                         <Calendar size={16} />
                         <span>Exp {format(new Date(item.expiresAt), 'MMM dd')}</span>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                        item.status === 'expired' ? 'bg-red-100 text-red-600' :
-                        item.status === 'expiring' ? 'bg-amber-100 text-amber-600' :
-                        'bg-emerald-100 text-emerald-600'
+                      <div className={`px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                        theme === 'brutalist' ? 'border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'rounded-full'
+                      } ${
+                        item.status === 'expired' ? (theme === 'dark' ? 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20' : theme === 'brutalist' ? 'bg-white text-black' : 'bg-red-100 text-red-600') :
+                        item.status === 'expiring' ? (theme === 'dark' ? 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20' : theme === 'brutalist' ? 'bg-white text-black' : 'bg-amber-100 text-amber-600') :
+                        (theme === 'dark' ? 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20' : theme === 'brutalist' ? 'bg-white text-black' : 'bg-emerald-100 text-emerald-600')
                       }`}>
-                        {item.status}
+                        {item.status}{theme === 'brutalist' && item.status === 'expired' && '!'}
                       </div>
                     </div>
                   </motion.div>
