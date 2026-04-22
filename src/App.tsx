@@ -280,12 +280,36 @@ export default function App() {
             {authMode === 'login' ? "Don't have an account? Create one" : "Already have an account? Login"}
           </button>
 
-          {authError && (
-            <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm w-full text-left flex gap-3 border border-red-100">
-              <AlertTriangle className="shrink-0" size={18} />
-              <p>{authError}</p>
-            </div>
-          )}
+          <AnimatePresence>
+            {authError && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1, 
+                  y: 0,
+                  x: [0, -10, 10, -10, 10, 0] 
+                }}
+                transition={{ 
+                  x: { duration: 0.4, times: [0, 0.2, 0.4, 0.6, 0.8, 1] },
+                  opacity: { duration: 0.2 }
+                }}
+                className="mt-6 p-4 bg-red-50 text-red-600 rounded-3xl text-sm w-full text-left flex gap-3 border border-red-100 shadow-sm"
+              >
+                <AlertTriangle className="shrink-0 mt-0.5" size={18} />
+                <div className="flex-1">
+                  <p className="font-bold mb-0.5">Authentication Issue</p>
+                  <p className="opacity-90 leading-relaxed">{authError}</p>
+                </div>
+                <button 
+                  onClick={() => setAuthError(null)}
+                  className="shrink-0 p-1 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     );
