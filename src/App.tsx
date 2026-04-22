@@ -544,7 +544,13 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
       </div>
       <div className="flex gap-3 pt-4">
         <button disabled={isSubmitting} type="button" onClick={onCancel} className="flex-1 px-6 py-4 rounded-2xl bg-neutral-100 font-bold hover:bg-neutral-200 transition-colors disabled:opacity-50">Cancel</button>
-        <button disabled={isSubmitting} type="button" onClick={handleSubmit} className="flex-1 px-6 py-4 rounded-2xl bg-neutral-950 text-white font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50">
+        <button 
+          disabled={isSubmitting} 
+          type="button" 
+          onClick={(e) => { e.preventDefault(); handleSubmit(); }}
+          onPointerUp={(e) => { e.preventDefault(); handleSubmit(); }}
+          className="flex-1 px-6 py-4 rounded-2xl bg-neutral-950 text-white font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 active:scale-95"
+        >
           {isSubmitting ? 'Adding...' : 'Add Item'}
         </button>
       </div>
