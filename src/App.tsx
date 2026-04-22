@@ -32,7 +32,8 @@ import {
   signOut, 
   User,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 
@@ -45,6 +46,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -111,6 +113,30 @@ export default function App() {
       if (error.code === 'auth/wrong-password') message = "Incorrect password.";
       if (error.code === 'auth/email-already-in-use') message = "This email is already registered.";
       if (error.code === 'auth/weak-password') message = "Password should be at least 6 characters.";
+      if (error.code === 'auth/invalid-email') message = "Please enter a valid email address.";
+      setAuthError(message);
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setAuthError("Please enter your email address first.");
+      return;
+    }
+    
+    setIsAuthSubmitting(true);
+    setAuthError(null);
+    setAuthSuccess(null);
+    
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setAuthSuccess("Password reset link sent! Please check your inbox.");
+    } catch (error: any) {
+      console.error("Password reset error: ", error);
+      let message = error.message || "Failed to send reset email.";
+      if (error.code === 'auth/user-not-found') message = "No account found with this email.";
       if (error.code === 'auth/invalid-email') message = "Please enter a valid email address.";
       setAuthError(message);
     } finally {
@@ -238,6 +264,17 @@ export default function App() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            {authMode === 'login' && (
+              <div className="flex justify-end pr-2">
+                <button 
+                  type="button" 
+                  onClick={handleForgotPassword}
+                  className="text-xs font-bold text-neutral-400 hover:text-neutral-900 transition-colors uppercase tracking-widest"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             <button 
               type="submit"
               disabled={isAuthSubmitting}
@@ -283,6 +320,7 @@ export default function App() {
           <AnimatePresence>
             {authError && (
               <motion.div 
+                key="auth-error"
                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                 animate={{ 
                   opacity: 1, 
@@ -304,6 +342,26 @@ export default function App() {
                 <button 
                   onClick={() => setAuthError(null)}
                   className="shrink-0 p-1 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </motion.div>
+            )}
+            {authSuccess && (
+              <motion.div 
+                key="auth-success"
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="mt-6 p-4 bg-emerald-50 text-emerald-600 rounded-3xl text-sm w-full text-left flex gap-3 border border-emerald-100 shadow-sm"
+              >
+                <CheckCircle2 className="shrink-0 mt-0.5" size={18} />
+                <div className="flex-1">
+                  <p className="font-bold mb-0.5">Success</p>
+                  <p className="opacity-90 leading-relaxed">{authSuccess}</p>
+                </div>
+                <button 
+                  onClick={() => setAuthSuccess(null)}
+                  className="shrink-0 p-1 hover:bg-emerald-100 rounded-lg transition-colors"
                 >
                   <X size={14} />
                 </button>
