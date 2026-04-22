@@ -457,15 +457,15 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
   const handleSubmit = async () => {
     try {
       if (!formData.name.trim()) {
-        alert("Please enter an item name.");
+        setSubmitError("Please enter an item name.");
         return;
       }
       if (!formData.quantity.trim()) {
-        alert("Please enter a quantity.");
+        setSubmitError("Please enter a quantity.");
         return;
       }
       if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
-        alert("Please enter a valid number of days for expiry.");
+        setSubmitError("Please enter a valid number of days for expiry.");
         return;
       }
 
@@ -481,7 +481,6 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
       
     } catch (err: any) {
        console.error("Submit error caught:", err);
-       alert(err.message || "An unknown error occurred during save.");
        setSubmitError(err.message || 'Failed to communicate with Firebase.');
     } finally {
       setIsSubmitting(false);
