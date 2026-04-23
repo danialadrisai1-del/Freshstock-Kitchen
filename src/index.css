@@ -1,42 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
   
-  /* Super Sleek Vibrant Palette */
-  --color-bg: #F2F2F7; /* Apple sleek gray */
+  /* Modern Food App Palette */
+  --color-bg: #F9FAFB;
   --color-surface: #FFFFFF;
-  --color-dark: #000000;
-  --color-dark-muted: #8E8E93;
+  --color-dark: #111827;
+  --color-dark-muted: #6B7280;
   
-  --color-brand: #FF4713; /* Electric Orange */
-  --color-brand-dark: #E03A0B;
-  --color-brand-light: #FFEDE8;
+  --color-brand: #10B981; /* Emerald Green */
+  --color-brand-dark: #059669;
+  --color-brand-light: #D1FAE5;
   
-  --color-warning: #FF9F0A; 
-  --color-warning-light: #FFF4E5;
+  --color-warning: #F59E0B; /* Amber */
+  --color-warning-light: #FEF3C7;
   
-  --color-danger: #FF3B30;
-  --color-danger-light: #FFEBEA;
+  --color-danger: #EF4444; /* Red */
+  --color-danger-light: #FEE2E2;
 
-  /* Aliases for compatibility */
+  /* Aliasing old variables to new food app ones to smooth CSS transition in App.tsx */
   --color-paper: var(--color-bg);
   --color-ink: var(--color-dark);
   --color-ink-muted: var(--color-dark-muted);
+  
   --color-olive: var(--color-brand);
   --color-olive-dark: var(--color-brand-dark);
   --color-olive-light: var(--color-brand-light);
+  
+  --color-terracotta: var(--color-danger);
+  --color-primary: var(--color-danger); /* Replacing brutalist primary with red */
+  --color-secondary: var(--color-warning); /* Replacing brutalist secondary with amber */
+  --color-accent: var(--color-brand);
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-dark);
   font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
-
-h1, h2, h3, h4, .font-serif {
-  font-family: var(--font-display) !important;
 }

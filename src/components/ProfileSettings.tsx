@@ -102,72 +102,72 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark/40 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark/40 backdrop-blur-sm">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 30 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 30 }}
-        className="bg-surface w-full max-w-sm rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden relative border border-gray-100 flex flex-col"
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-surface w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden relative border border-gray-100 flex flex-col"
       >
-        <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100 bg-surface">
-          <h2 className="text-2xl font-display font-bold text-dark flex items-center gap-2 tracking-tight">
-            {mode === 'menu' ? 'Settings' : 
-             mode === 'profile' ? 'Avatar' :
-             'Password'}
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-xl font-bold text-dark flex items-center gap-2">
+            {mode === 'menu' ? 'Profile Settings' : 
+             mode === 'profile' ? 'Change Avatar' :
+             'Change Password'}
           </h2>
-          <button onClick={onClose} className="text-gray-500 bg-gray-100 hover:bg-gray-200 hover:text-dark rounded-full p-2 transition-all">
-            <X size={20} strokeWidth={3} />
+          <button onClick={onClose} className="text-gray-400 hover:bg-gray-200 hover:text-dark rounded-full p-2 transition-all">
+            <X size={20} strokeWidth={2.5} />
           </button>
         </div>
 
-        <div className="p-8">
+        <div className="p-6">
           {error && (
-            <div className="mb-6 p-4 bg-danger-light/50 text-danger-dark rounded-2xl border border-danger/10 text-sm flex items-start gap-3 shadow-sm">
-              <AlertTriangle size={18} className="shrink-0 mt-0.5 text-danger" strokeWidth={2.5} />
+            <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm flex items-start gap-3 shadow-sm">
+              <AlertTriangle size={18} className="shrink-0 mt-0.5 text-red-500" strokeWidth={2.5} />
               <p className="font-bold">{error}</p>
             </div>
           )}
           {success && (
-            <div className="mb-6 p-4 bg-brand-light/50 text-brand-dark rounded-2xl border border-brand/10 text-sm font-bold shadow-sm">
+            <div className="mb-6 p-4 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 text-sm font-bold shadow-sm">
               {success}
             </div>
           )}
 
           {mode === 'menu' && (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-4 p-5 bg-bg rounded-[1.5rem] border border-transparent mb-4">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
                 {user.photoURL ? (
-                  <img src={user.photoURL} alt="User" className="w-[60px] h-[60px] rounded-full object-cover border-[3px] border-white shadow-sm" />
+                  <img src={user.photoURL} alt="User" className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
                 ) : (
-                  <div className="w-[60px] h-[60px] rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-2xl uppercase shadow-sm">
+                  <div className="w-14 h-14 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-xl uppercase shadow-sm">
                     {user.email?.charAt(0) || 'U'}
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-lg text-dark">{user.displayName || 'Kitchen User'}</p>
-                  <p className="text-xs font-semibold text-gray-500 truncate">{user.email}</p>
+                  <p className="font-bold text-dark">{user.displayName || 'Kitchen User'}</p>
+                  <p className="text-sm font-medium text-gray-500 truncate">{user.email}</p>
                 </div>
               </div>
 
-              <button onClick={() => { setMode('profile'); setError(null); setSuccess(null); }} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-2xl transition-colors font-bold text-dark text-left group">
-                <div className="w-12 h-12 rounded-2xl bg-bg group-hover:bg-white text-dark flex items-center justify-center shadow-sm">
-                  <ImageIcon size={20} strokeWidth={2.5} />
+              <button onClick={() => { setMode('profile'); setError(null); setSuccess(null); }} className="flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition-colors font-semibold text-dark text-left">
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                  <ImageIcon size={18} strokeWidth={2.5} />
                 </div>
                 Change Profile Picture
               </button>
 
               {!isGoogleSignIn && (
-                <button onClick={() => { setMode('password'); setError(null); setSuccess(null); }} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-2xl transition-colors font-bold text-dark text-left group">
-                  <div className="w-12 h-12 rounded-2xl bg-bg group-hover:bg-white text-dark flex items-center justify-center shadow-sm">
-                    <Key size={20} strokeWidth={2.5} />
+                <button onClick={() => { setMode('password'); setError(null); setSuccess(null); }} className="flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition-colors font-semibold text-dark text-left">
+                  <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+                    <Key size={18} strokeWidth={2.5} />
                   </div>
                   Change Password
                 </button>
               )}
 
-              <button onClick={onSignOut} className="flex items-center gap-4 p-4 hover:bg-danger-light/30 rounded-2xl transition-colors font-bold text-danger text-left group">
-                <div className="w-12 h-12 rounded-2xl bg-danger-light/50 group-hover:bg-white text-danger flex items-center justify-center shadow-sm">
-                  <LogOut size={20} strokeWidth={2.5} />
+              <button onClick={onSignOut} className="flex items-center gap-3 p-4 hover:bg-gray-50 rounded-xl transition-colors font-semibold text-dark text-left">
+                <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center">
+                  <LogOut size={18} strokeWidth={2.5} />
                 </div>
                 Log Out
               </button>
@@ -175,12 +175,12 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
           )}
 
           {mode === 'profile' && (
-            <form onSubmit={handleUpdateProfile} className="space-y-8">
-              <div className="flex flex-col items-center justify-center space-y-6">
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-4">
                 {photoURL ? (
-                  <img src={photoURL} alt="Preview" className="w-[120px] h-[120px] rounded-[2rem] object-cover border-[6px] border-bg shadow-sm" />
+                  <img src={photoURL} alt="Preview" className="w-24 h-24 rounded-full object-cover border-4 border-gray-100 shadow-sm" />
                 ) : (
-                  <div className="w-[120px] h-[120px] rounded-[2rem] bg-brand-light text-brand flex items-center justify-center font-bold text-4xl uppercase shadow-sm">
+                  <div className="w-24 h-24 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-3xl uppercase shadow-sm">
                     {user.email?.charAt(0) || 'U'}
                   </div>
                 )}
@@ -194,15 +194,15 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
                 <button 
                   type="button" 
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-6 py-3.5 bg-bg text-dark font-bold rounded-2xl hover:bg-gray-200 transition-colors"
+                  className="px-5 py-2.5 bg-gray-100 text-dark font-semibold rounded-xl hover:bg-gray-200 transition-colors text-sm"
                 >
                   Choose File...
                 </button>
               </div>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setMode('menu')} className="flex-1 px-4 py-4 rounded-2xl bg-bg text-gray-600 font-bold hover:bg-gray-200 transition-colors">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-2xl bg-brand text-white font-bold hover:bg-brand-dark transition-colors flex items-center justify-center gap-2 shadow-sm shadow-brand/20">
-                  {isSubmitting ? <Loader2 className="animate-spin" size={20}/> : <Save size={20}/>} Save
+                <button type="button" onClick={() => setMode('menu')} className="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-brand text-white font-bold hover:bg-brand-dark transition-colors flex items-center justify-center gap-2">
+                  {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Save size={18}/>} Save
                 </button>
               </div>
             </form>
@@ -211,21 +211,21 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
           {mode === 'password' && (
             <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-2">New Password</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">New Password</label>
                 <input 
                   type="password"
                   required
                   minLength={6}
                   placeholder="At least 6 characters"
-                  className="w-full bg-bg border border-transparent rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand/20 focus:bg-white transition-all text-dark font-semibold text-lg"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 focus:bg-white transition-all text-dark font-medium"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setMode('menu')} className="flex-1 px-4 py-4 rounded-2xl bg-bg text-gray-600 font-bold hover:bg-gray-200 transition-colors">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-2xl bg-dark text-white font-bold hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-xl shadow-dark/10">
-                  {isSubmitting ? <Loader2 className="animate-spin" size={20}/> : <Save size={20}/>} Update
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setMode('menu')} className="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2">
+                  {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Save size={18}/>} Update
                 </button>
               </div>
             </form>
