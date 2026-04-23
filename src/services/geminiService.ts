@@ -1,6 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+let genAI: GoogleGenAI | null = null;
+
+const getGenAI = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+  
+  if (!genAI) {
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  return genAI;
+};
 
 export interface ScannedGrocery {
   name: string;
@@ -13,11 +23,18 @@ export const analyzeGroceryImage = async (base64Data: string): Promise<{ data: S
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return { data: null, error: "API Key is missing. Please check your environment variables." };
+      console.warn("GEMINI_API_KEY is not defined in process.env");
+      return { data: null, error: "API Key is missing. Please check your environment variables in the Settings menu." };
     }
+    console.log("Gemini API Key found:", apiKey.substring(0, 4) + "..." + apiKey.substring(apiKey.length - 4));
 
     console.log("Analyzing image with Gemini...");
-    const response = await ai.models.generateContent({
+    const aiInstance = getGenAI();
+    if (!aiInstance) {
+      return { data: null, error: "AI Instance could not be initialized. Is the API Key set?" };
+    }
+
+    const response = await aiInstance.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: {
         parts: [
