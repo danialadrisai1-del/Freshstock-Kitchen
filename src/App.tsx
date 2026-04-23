@@ -41,6 +41,7 @@ import { GroceryItem } from './types';
 import { Scanner } from './components/Scanner';
 import { ScannedGrocery } from './services/geminiService';
 import { auth, db, googleProvider } from './firebase';
+import { Logo } from './components/Logo';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -233,9 +234,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md w-full bg-surface p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col items-center relative overflow-hidden border border-gray-100"
         >
-          <div className="w-20 h-20 bg-brand-light rounded-2xl flex items-center justify-center text-brand mb-6 shadow-sm border border-brand/20">
-            <UtensilsCrossed size={36} strokeWidth={2.5} />
-          </div>
+          <Logo size={80} className="mb-6 shadow-sm" />
           
           <h1 className="text-3xl font-bold tracking-tight leading-none mb-3 text-dark">FreshStock</h1>
           <p className="text-dark-muted mb-8 font-medium max-w-[260px] text-base">Your smart, beautifully organized kitchen inventory.</p>
@@ -374,9 +373,7 @@ export default function App() {
       <header className="bg-surface border-b border-gray-100 px-6 py-5 md:py-6 sticky top-0 z-10 shadow-sm">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-brand-light text-brand rounded-2xl flex items-center justify-center">
-              <Package size={24} strokeWidth={2.5} />
-            </div>
+            <Logo size={48} />
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-dark leading-none">
                 FreshStock

@@ -18,15 +18,18 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { facingMode: { ideal: 'environment' } } 
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(console.error);
+        };
       }
       setError(null);
     } catch (err) {
       console.error("Camera access error:", err);
-      setError("Please enable camera permissions to scan items.");
+      setError("Please enable camera permissions or check if another app is using the camera.");
     }
   };
 
@@ -40,39 +43,58 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
   }, []);
 
   const captureImage = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || isAnalyzing) return;
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    
+    // Fallback dimensions
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 480;
+    
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
-    const fullImageData = canvas.toDataURL('image/jpeg');
+    ctx.drawImage(video, 0, 0, width, height);
+    const fullImageData = canvas.toDataURL('image/jpeg', 0.8);
+    const base64Data = fullImageData.split(',')[1];
+
+    if (!base64Data || base64Data.length < 100) {
+      setError("Captured image is empty. Please try again.");
+      return;
+    }
 
     setIsAnalyzing(true);
-    const result = await analyzeGroceryImage(base64Data);
+    setError(null);
 
-    if (result) {
-      let timeoutId: NodeJS.Timeout;
-      try {
-        const scanPromise = onScan(result, fullImageData);
-        const timeoutPromise = new Promise<void>((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error("Database connection timed out. Did you click 'Create database' in the Firebase Console?")), 8000);
-        });
-        await Promise.race([scanPromise, timeoutPromise]);
-      } catch (e: any) {
-        setError(e.message || "Failed to save item to database.");
-      } finally {
-        if (timeoutId!) clearTimeout(timeoutId);
+    try {
+      const result = await analyzeGroceryImage(base64Data);
+
+      if (result) {
+        let timeoutId: NodeJS.Timeout;
+        try {
+          const scanPromise = onScan(result, fullImageData);
+          const timeoutPromise = new Promise<void>((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error("Saving to database took too long. Please check your connection.")), 15000);
+          });
+          await Promise.race([scanPromise, timeoutPromise]);
+        } catch (e: any) {
+          console.error("Save error:", e);
+          setError(e.message || "Failed to save item to database.");
+        } finally {
+          if (timeoutId!) clearTimeout(timeoutId);
+        }
+      } else {
+        setError("Could not identify the item. Please ensure it's clearly visible and try again.");
       }
-    } else {
-      setError("Could not identify the item. Please try again.");
+    } catch (err) {
+      console.error("Capture error:", err);
+      setError("An error occurred during analysis.");
+    } finally {
+      setIsAnalyzing(false);
     }
-    setIsAnalyzing(false);
   };
 
   return (

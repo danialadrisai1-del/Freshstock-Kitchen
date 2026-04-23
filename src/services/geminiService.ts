@@ -11,6 +11,7 @@ export interface ScannedGrocery {
 
 export const analyzeGroceryImage = async (base64Data: string): Promise<ScannedGrocery | null> => {
   try {
+    console.log("Analyzing image with Gemini...");
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
@@ -41,7 +42,11 @@ export const analyzeGroceryImage = async (base64Data: string): Promise<ScannedGr
       }
     });
 
-    const result = JSON.parse(response.text || '{}');
+    const text = response.text || '{}';
+    // Remove potential markdown backticks
+    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const result = JSON.parse(cleanJson);
+    console.log("AI Analysis Result:", result);
     return result as ScannedGrocery;
   } catch (error) {
     console.error("Error analyzing image:", error);
