@@ -24,6 +24,7 @@ import {
   Mail,
   Key,
   Menu,
+  Edit2,
   User as UserIcon // Imported specifically from lucide-react
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -61,6 +62,7 @@ export default function App() {
   const [isAddingManual, setIsAddingManual] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
   const [processingItems, setProcessingItems] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'fresh' | 'expiring' | 'expired'>('all');
@@ -238,6 +240,25 @@ export default function App() {
       await deleteDoc(doc(db, 'users', user.uid, 'inventory', id));
     } catch (error) {
       console.error("Error deleting item: ", error);
+    }
+  };
+
+  const editItem = async (id: string, updatedData: Partial<GroceryItem>) => {
+    if (!user) throw new Error("No authenticated user.");
+    
+    const docRef = doc(db, 'users', user.uid, 'inventory', id);
+
+    let timeoutId: NodeJS.Timeout;
+    const savePromise = setDoc(docRef, updatedData, { merge: true });
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Database connection timed out.")), 8000);
+    });
+
+    try {
+      await Promise.race([savePromise, timeoutPromise]);
+      setEditingItem(null);
+    } finally {
+      if (timeoutId!) clearTimeout(timeoutId);
     }
   };
 
@@ -559,12 +580,20 @@ export default function App() {
                           <p className="text-gray-500 text-sm font-medium mt-1">{item.category}</p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => deleteItem(item.id)}
-                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors rounded-xl"
-                      >
-                        <Trash2 size={18} strokeWidth={2.5} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button 
+                          onClick={() => setEditingItem(item)}
+                          className="p-2 text-gray-400 hover:text-brand hover:bg-brand-light/30 transition-colors rounded-xl"
+                        >
+                          <Edit2 size={18} strokeWidth={2.5} />
+                        </button>
+                        <button 
+                          onClick={() => deleteItem(item.id)}
+                          className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors rounded-xl"
+                        >
+                          <Trash2 size={18} strokeWidth={2.5} />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between mt-3 py-3 px-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -615,17 +644,24 @@ export default function App() {
         </div>
       </div>
 
-      {/* Manual Add Dialog */}
+      {/* Item Form Dialog */}
       <AnimatePresence>
-        {isAddingManual && (
-          <Dialog onClose={() => setIsAddingManual(false)}>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-serif tracking-tight text-ink">Manual Add</h2>
-                <p className="text-ink-muted text-sm">Enter the details of your grocery item</p>
-              </div>
-              <ManualAddForm onSubmit={addItem} onCancel={() => setIsAddingManual(false)} />
-            </div>
+        {(isAddingManual || editingItem) && (
+          <Dialog onClose={() => { setIsAddingManual(false); setEditingItem(null); }}>
+            <GroceryItemForm 
+              key={editingItem ? editingItem.id : 'add'}
+              initialData={editingItem}
+              onSubmit={async (data) => {
+                if (editingItem) {
+                  await editItem(editingItem.id, data);
+                } else {
+                  await addItem(data);
+                }
+                setIsAddingManual(false);
+                setEditingItem(null);
+              }} 
+              onCancel={() => { setIsAddingManual(false); setEditingItem(null); }} 
+            />
           </Dialog>
         )}
       </AnimatePresence>
@@ -692,12 +728,18 @@ function Dialog({ children, onClose }: { children: React.ReactNode, onClose: () 
   );
 }
 
-function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promise<void> | void, onCancel: () => void }) {
+interface GroceryItemFormProps {
+  initialData?: GroceryItem | null;
+  onSubmit: (data: any) => Promise<void> | void;
+  onCancel: () => void;
+}
+
+const GroceryItemForm: React.FC<GroceryItemFormProps> = ({ initialData, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    quantity: '1',
-    category: 'Produce',
-    expiryDays: '7'
+    name: initialData?.name || '',
+    quantity: initialData?.quantity || '1',
+    category: initialData?.category || 'Produce',
+    expiryDate: initialData?.expiresAt ? format(new Date(initialData.expiresAt), 'yyyy-MM-dd') : format(addDays(new Date(), 7), 'yyyy-MM-dd')
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -712,19 +754,22 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
         setSubmitError("Please enter a quantity.");
         return;
       }
-      if (!formData.expiryDays || isNaN(parseInt(formData.expiryDays))) {
-        setSubmitError("Please enter a valid number of days for expiry.");
+      if (!formData.expiryDate) {
+        setSubmitError("Please select an expiry date.");
         return;
       }
 
       setIsSubmitting(true);
       setSubmitError(null);
       
+      const [year, month, day] = formData.expiryDate.split('-').map(Number);
+      const expiresAtDate = new Date(year, month - 1, day, 12, 0, 0);
+      
       await onSubmit({
         name: formData.name,
         quantity: formData.quantity,
         category: formData.category,
-        expiresAt: addDays(new Date(), parseInt(formData.expiryDays)).toISOString()
+        expiresAt: expiresAtDate.toISOString()
       });
       
     } catch (err: any) {
@@ -738,8 +783,8 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-3xl font-bold text-dark">Add Item</h2>
-        <p className="text-gray-500 text-sm font-medium">Manually input a stock item</p>
+        <h2 className="text-3xl font-bold text-dark">{initialData ? 'Edit Item' : 'Add Item'}</h2>
+        <p className="text-gray-500 text-sm font-medium">{initialData ? 'Update item details' : 'Manually input a stock item'}</p>
       </div>
 
       {submitError && (
@@ -769,12 +814,12 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Expires (Days)</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Expiry Date</label>
             <input 
-              type="number"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-semibold"
-              value={formData.expiryDays}
-              onChange={e => setFormData({...formData, expiryDays: e.target.value})}
+              type="date"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-semibold h-[56px]"
+              value={formData.expiryDate}
+              onChange={e => setFormData({...formData, expiryDate: e.target.value})}
             />
           </div>
         </div>
@@ -809,7 +854,7 @@ function ManualAddForm({ onSubmit, onCancel }: { onSubmit: (data: any) => Promis
           onPointerUp={(e) => { e.preventDefault(); handleSubmit(); }}
           className="flex-1 px-6 py-3.5 rounded-xl bg-brand text-white font-bold hover:bg-brand-dark transition-all shadow-sm shadow-brand/20 disabled:opacity-50 active:scale-[0.98]"
         >
-          {isSubmitting ? 'Saving...' : 'Add Item'}
+          {isSubmitting ? 'Saving...' : initialData ? 'Save Changes' : 'Add Item'}
         </button>
       </div>
     </div>

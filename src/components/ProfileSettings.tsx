@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { User as UserType, updateProfile, updatePassword } from 'firebase/auth';
 import { X, LogOut, Loader2, Save, Trash2, Key, Image as ImageIcon, AlertTriangle } from 'lucide-react';
@@ -18,6 +18,8 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
   const [mode, setMode] = useState<'menu' | 'profile' | 'password'>('menu');
 
   const isGoogleSignIn = user.providerData.some(p => p.providerId === 'google.com');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +61,44 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_SIZE = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setPhotoURL(dataUrl);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -136,15 +176,28 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
 
           {mode === 'profile' && (
             <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Profile Photo URL</label>
+              <div className="flex flex-col items-center justify-center space-y-4">
+                {photoURL ? (
+                  <img src={photoURL} alt="Preview" className="w-24 h-24 rounded-full object-cover border-4 border-gray-100 shadow-sm" />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-3xl uppercase shadow-sm">
+                    {user.email?.charAt(0) || 'U'}
+                  </div>
+                )}
                 <input 
-                  type="url"
-                  placeholder="https://example.com/avatar.png"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium"
-                  value={photoURL}
-                  onChange={e => setPhotoURL(e.target.value)}
+                  type="file" 
+                  accept="image/*" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  className="hidden" 
                 />
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-5 py-2.5 bg-gray-100 text-dark font-semibold rounded-xl hover:bg-gray-200 transition-colors text-sm"
+                >
+                  Choose File...
+                </button>
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setMode('menu')} className="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors">Cancel</button>
