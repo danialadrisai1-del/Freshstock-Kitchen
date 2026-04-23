@@ -9,24 +9,27 @@ export interface ScannedGrocery {
   suggestedExpiryDays: number;
 }
 
-export const analyzeGroceryImage = async (base64Data: string): Promise<ScannedGrocery | null> => {
+export const analyzeGroceryImage = async (base64Data: string): Promise<{ data: ScannedGrocery | null, error: string | null }> => {
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return { data: null, error: "API Key is missing. Please check your environment variables." };
+    }
+
     console.log("Analyzing image with Gemini...");
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: [
-        {
-          parts: [
-            { text: "Analyze this image of a grocery item. Identify the item name, estimated quantity, category, and suggest how many days until it typically expires from now. Return as JSON." },
-            {
-              inlineData: {
-                mimeType: "image/jpeg",
-                data: base64Data
-              }
+      contents: {
+        parts: [
+          { text: "Analyze this image of a grocery item. Identify the item name, estimated quantity, category, and suggest how many days until it typically expires from now. Return as JSON." },
+          {
+            inlineData: {
+              mimeType: "image/jpeg",
+              data: base64Data
             }
-          ]
-        }
-      ],
+          }
+        ]
+      },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -42,14 +45,19 @@ export const analyzeGroceryImage = async (base64Data: string): Promise<ScannedGr
       }
     });
 
-    const text = response.text || '{}';
-    // Remove potential markdown backticks
+    const text = response.text;
+    if (!text) {
+      return { data: null, error: "The AI returned an empty response. Try taking a clearer photo." };
+    }
+
+    // Remove potential markdown backticks or extra text
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const result = JSON.parse(cleanJson);
     console.log("AI Analysis Result:", result);
-    return result as ScannedGrocery;
-  } catch (error) {
+    return { data: result as ScannedGrocery, error: null };
+  } catch (error: any) {
     console.error("Error analyzing image:", error);
-    return null;
+    const msg = error.message || "Unknown error during AI analysis.";
+    return { data: null, error: `AI Error: ${msg}` };
   }
 };

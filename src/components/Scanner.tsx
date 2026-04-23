@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, X, Check, Loader2 } from 'lucide-react';
+import { Camera, X, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { analyzeGroceryImage, ScannedGrocery } from '../services/geminiService';
 
@@ -70,7 +70,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
     setError(null);
 
     try {
-      const result = await analyzeGroceryImage(base64Data);
+      const { data: result, error: analyzeError } = await analyzeGroceryImage(base64Data);
 
       if (result) {
         let timeoutId: NodeJS.Timeout;
@@ -80,6 +80,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
             timeoutId = setTimeout(() => reject(new Error("Saving to database took too long. Please check your connection.")), 15000);
           });
           await Promise.race([scanPromise, timeoutPromise]);
+          onClose(); // Close on success
         } catch (e: any) {
           console.error("Save error:", e);
           setError(e.message || "Failed to save item to database.");
@@ -87,11 +88,11 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
           if (timeoutId!) clearTimeout(timeoutId);
         }
       } else {
-        setError("Could not identify the item. Please ensure it's clearly visible and try again.");
+        setError(analyzeError || "Could not identify the item. Please ensure it's clearly visible and try again.");
       }
     } catch (err) {
       console.error("Capture error:", err);
-      setError("An error occurred during analysis.");
+      setError("An unexpected error occurred during analysis.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -113,14 +114,25 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
 
       <div className="relative w-full max-w-sm aspect-[3/4] bg-dark-muted rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 ring-4 ring-white/5">
         {error ? (
-          <div className="absolute inset-0 flex items-center justify-center text-center p-8 bg-red-500/20 text-red-100">
-            <p className="font-semibold">{error}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-black/60 backdrop-blur-md text-white">
+            <AlertTriangle className="text-amber-400 mb-4" size={48} />
+            <p className="font-bold mb-6">{error}</p>
+            <button 
+              onClick={() => {
+                setError(null);
+                startCamera(); // Re-ensure camera
+              }}
+              className="px-6 py-2 bg-brand text-white rounded-xl font-bold hover:bg-brand-dark transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         ) : (
           <video 
             ref={videoRef} 
             autoPlay 
             playsInline 
+            muted
             className="w-full h-full object-cover"
           />
         )}
