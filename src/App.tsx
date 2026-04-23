@@ -23,6 +23,7 @@ import {
   Loader2,
   Mail,
   Key,
+  Menu,
   User as UserIcon // Imported specifically from lucide-react
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -59,6 +60,7 @@ export default function App() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAddingManual, setIsAddingManual] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'fresh' | 'expiring' | 'expired'>('all');
 
@@ -371,52 +373,69 @@ export default function App() {
   const expiredCount = items.filter(i => getStatus(i.expiresAt) === 'expired').length;
 
   return (
-    <div className="min-h-screen bg-bg pb-20">
-      {/* Header */}
-      <header className="bg-surface border-b border-gray-100 px-6 py-5 md:py-6 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
-          <div className="flex items-center gap-3">
-            <Logo size={48} />
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-dark leading-none">
-                FreshStock
-              </h1>
-              <p className="text-xs font-semibold text-gray-500 mt-1">SMART KITCHEN INVENTORY</p>
+    <div className="flex h-screen bg-bg overflow-hidden w-full relative">
+      {/* Sidebar (Desktop) */}
+      <aside className="w-[280px] bg-surface border-r border-gray-100 flex-col justify-between hidden md:flex shrink-0 z-20">
+         <div className="p-6 pb-2">
+            <div className="flex items-center gap-3 mb-8">
+               <Logo size={40} />
+               <div>
+                  <h1 className="text-2xl font-bold tracking-tight text-dark leading-none">FreshStock</h1>
+                  <p className="text-[10px] font-bold text-brand uppercase tracking-wider mt-1">Kitchen Inventory</p>
+               </div>
             </div>
-          </div>
-          
-          <div className="flex gap-3 items-center">
-            <button 
-              onClick={() => setIsAddingManual(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 text-dark font-semibold hover:bg-gray-200 transition-colors"
-            >
-              <Plus size={18} strokeWidth={2.5} />
-              <span>Manual</span>
-            </button>
-            <button 
-              onClick={() => setIsScannerOpen(true)}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-brand text-white font-semibold hover:bg-brand-dark transition-all shadow-sm shadow-brand/20 active:scale-[0.98]"
-            >
-              <Camera size={18} strokeWidth={2.5} />
-              <span>Scan Item</span>
-            </button>
             
+            <nav className="space-y-2">
+               <div className="px-4 py-3 bg-brand-light/30 text-brand-dark rounded-xl font-bold flex items-center gap-3 border border-brand/10">
+                  <Package size={20} className="text-brand" strokeWidth={2.5}/>
+                  Inventory
+               </div>
+            </nav>
+         </div>
+         
+         <div className="p-4 border-t border-gray-100 bg-gray-50/50">
             <button 
               onClick={() => setIsProfileSettingsOpen(true)}
-              className="flex shrink-0 items-center justify-center w-[44px] h-[44px] bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors ml-1 border border-gray-200 overflow-hidden"
-              title="Profile Settings"
+              className="flex items-center gap-3 w-full p-2 hover:bg-gray-100/80 rounded-xl transition-colors text-left group"
             >
-              {user.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <UserIcon size={20} className="text-gray-500" strokeWidth={2.5} />
-              )}
+              <div className="w-10 h-10 rounded-full bg-white border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center shadow-sm group-hover:border-gray-300 transition-colors">
+                 {user.photoURL ? (
+                    <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                 ) : (
+                    <UserIcon size={20} className="text-gray-400" strokeWidth={2.5} />
+                 )}
+              </div>
+              <div className="flex-1 truncate">
+                 <p className="font-bold text-dark text-sm truncate">{user.displayName || 'Kitchen User'}</p>
+                 <p className="text-gray-500 text-xs font-semibold truncate">{user.email}</p>
+              </div>
             </button>
-          </div>
-        </div>
-      </header>
+         </div>
+      </aside>
 
-      <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+      {/* Main Area */}
+      <div className="flex flex-col flex-1 h-full relative overflow-hidden">
+        {/* Mobile Header */}
+        <header className="md:hidden flex items-center justify-between p-4 bg-surface border-b border-gray-100 z-10 shrink-0 shadow-sm">
+           <div className="flex items-center gap-2">
+              <Logo size={32} />
+              <h1 className="text-xl font-bold tracking-tight text-dark leading-none">FreshStock</h1>
+           </div>
+           
+           <button 
+             onClick={() => setIsProfileSettingsOpen(true)}
+             className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm"
+           >
+             {user.photoURL ? (
+                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+             ) : (
+                <UserIcon size={20} className="text-gray-500" strokeWidth={2.5} />
+             )}
+           </button>
+        </header>
+
+        <main className="flex-1 overflow-y-auto pb-32">
+          <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
         {/* Alerts Section */}
         {(expiringSoonCount > 0 || expiredCount > 0) && (
           <div className="flex flex-col md:flex-row gap-4">
@@ -549,7 +568,27 @@ export default function App() {
             </AnimatePresence>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
+        
+        {/* Floating Action Buttons (Bottom Center) */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/80 backdrop-blur-xl p-2 rounded-full shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-white/20 ring-1 ring-black/5">
+           <button 
+             onClick={() => setIsAddingManual(true)}
+             className="flex items-center justify-center gap-2 px-5 md:px-6 py-3.5 rounded-full bg-gray-100 text-dark font-bold hover:bg-gray-200 transition-colors shrink-0"
+           >
+             <Plus size={20} strokeWidth={2.5} />
+             <span className="hidden sm:inline">Manual</span>
+           </button>
+           <button 
+             onClick={() => setIsScannerOpen(true)}
+             className="flex items-center justify-center gap-2 px-6 md:px-8 py-3.5 rounded-full bg-brand text-white font-bold hover:bg-brand-dark transition-all shadow-md active:scale-[0.98] shrink-0 whitespace-nowrap"
+           >
+             <Camera size={20} className="text-white" strokeWidth={2.5} />
+             <span>Scan Item</span>
+           </button>
+        </div>
+      </div>
 
       {/* Manual Add Dialog */}
       <AnimatePresence>

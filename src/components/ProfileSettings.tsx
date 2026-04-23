@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { User as UserType, updateProfile, updatePassword, deleteUser } from 'firebase/auth';
+import { User as UserType, updateProfile, updatePassword } from 'firebase/auth';
 import { X, LogOut, Loader2, Save, Trash2, Key, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 
 interface ProfileSettingsProps {
@@ -15,7 +15,7 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [mode, setMode] = useState<'menu' | 'profile' | 'password' | 'delete'>('menu');
+  const [mode, setMode] = useState<'menu' | 'profile' | 'password'>('menu');
 
   const isGoogleSignIn = user.providerData.some(p => p.providerId === 'google.com');
 
@@ -61,22 +61,6 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
     }
   };
 
-  const handleDeleteProfile = async () => {
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      await deleteUser(user);
-      onSignOut();
-    } catch (err: any) {
-      if (err.code === 'auth/requires-recent-login') {
-        setError("For security reasons, please log out and log back in before deleting your account.");
-      } else {
-        setError(err.message || "Failed to delete account.");
-      }
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark/40 backdrop-blur-sm">
       <motion.div 
@@ -89,7 +73,7 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
           <h2 className="text-xl font-bold text-dark flex items-center gap-2">
             {mode === 'menu' ? 'Profile Settings' : 
              mode === 'profile' ? 'Change Avatar' :
-             mode === 'password' ? 'Change Password' : 'Delete Account'}
+             'Change Password'}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:bg-gray-200 hover:text-dark rounded-full p-2 transition-all">
             <X size={20} strokeWidth={2.5} />
@@ -147,15 +131,6 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
                 </div>
                 Log Out
               </button>
-
-              <div className="h-px bg-gray-100 my-2"></div>
-
-              <button onClick={() => { setMode('delete'); setError(null); setSuccess(null); }} className="flex items-center gap-3 p-4 hover:bg-red-50 text-red-600 rounded-xl transition-colors font-semibold text-left">
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <Trash2 size={18} strokeWidth={2.5} />
-                </div>
-                Delete Account
-              </button>
             </div>
           )}
 
@@ -201,20 +176,6 @@ export function ProfileSettings({ user, onClose, onSignOut }: ProfileSettingsPro
                 </button>
               </div>
             </form>
-          )}
-
-          {mode === 'delete' && (
-            <div className="space-y-6">
-              <p className="text-dark font-medium leading-relaxed">
-                Are you absolutely sure you want to delete your account? This action <strong className="text-red-500">cannot be undone</strong> and all your inventory data will be lost.
-              </p>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setMode('menu')} className="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition-colors">Cancel</button>
-                <button onClick={handleDeleteProfile} disabled={isSubmitting} className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
-                  {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Trash2 size={18}/>} Delete
-                </button>
-              </div>
-            </div>
           )}
         </div>
       </motion.div>
