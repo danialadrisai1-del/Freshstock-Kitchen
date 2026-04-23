@@ -80,18 +80,18 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-ink/95 backdrop-blur-sm flex flex-col items-center justify-center p-4"
     >
       <button 
         onClick={onClose}
-        className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+        className="absolute top-6 right-6 text-surface/70 hover:text-surface transition-colors"
       >
         <X size={32} />
       </button>
 
-      <div className="relative w-full max-w-md aspect-[3/4] bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+      <div className="relative w-full max-w-md aspect-[3/4] bg-ink rounded-[2.5rem] overflow-hidden shadow-2xl border border-surface/10 ring-4 ring-ink">
         {error ? (
-          <div className="absolute inset-0 flex items-center justify-center text-center p-8 text-neutral-400">
+          <div className="absolute inset-0 flex items-center justify-center text-center p-8 text-terracotta bg-terracotta/5">
             {error}
           </div>
         ) : (
@@ -105,29 +105,29 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
         
         <canvas ref={canvasRef} className="hidden" />
 
-        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-black/60 to-transparent">
+        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-ink/80 via-ink/40 to-transparent">
           <button
             onClick={captureImage}
             disabled={isAnalyzing}
-            className="w-20 h-20 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
+            className="w-20 h-20 rounded-full bg-surface flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50 hover:bg-paper"
           >
             {isAnalyzing ? (
-              <Loader2 className="animate-spin text-black" size={32} />
+              <Loader2 className="animate-spin text-ink" size={32} />
             ) : (
-              <div className="w-16 h-16 rounded-full border-2 border-black/10" />
+              <div className="w-16 h-16 rounded-full border-4 border-ink/10" />
             )}
           </button>
         </div>
 
         {isAnalyzing && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center text-white p-8">
-            <Loader2 className="animate-spin mb-4" size={48} />
-            <p className="text-lg font-medium text-center">AI is identifying your grocery...</p>
+          <div className="absolute inset-0 bg-ink/60 backdrop-blur-md flex flex-col items-center justify-center text-surface p-8">
+            <Loader2 className="animate-spin mb-4 text-olive-light" size={48} />
+            <p className="text-xl font-serif italic text-center">Identifying item...</p>
           </div>
         )}
       </div>
 
-      <p className="mt-8 text-white/50 text-sm">Point the camera at your grocery item</p>
+      <p className="mt-8 text-surface/50 text-sm tracking-wide">Point the camera at your grocery item</p>
     </motion.div>
   );
 };
