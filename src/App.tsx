@@ -41,7 +41,7 @@ import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from '
 
 import { GroceryItem } from './types';
 import { Scanner } from './components/Scanner';
-import { ScannedGrocery } from './services/geminiService';
+import { ScannedGrocery, analyzeGroceryImage } from './services/geminiService';
 import { auth, db, googleProvider } from './firebase';
 import { Logo } from './components/Logo';
 import { ProfileSettings } from './components/ProfileSettings';
@@ -61,6 +61,7 @@ export default function App() {
   const [isAddingManual, setIsAddingManual] = useState(false);
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [processingItems, setProcessingItems] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'fresh' | 'expiring' | 'expired'>('all');
 
@@ -95,6 +96,30 @@ export default function App() {
 
     return () => unsubscribe();
   }, [user]);
+
+  const processCapturedImage = async (base64Data: string, fullImageData: string) => {
+    setProcessingItems(prev => prev + 1);
+    try {
+      const { data: result, error } = await analyzeGroceryImage(base64Data);
+      
+      if (result) {
+        await addItem({
+          name: result.name,
+          category: result.category,
+          quantity: result.quantity,
+          imageUrl: fullImageData,
+          expiresAt: addDays(new Date(), result.suggestedExpiryDays).toISOString()
+        });
+      } else {
+        alert("Failed to track item: " + error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error processing item.");
+    } finally {
+      setProcessingItems(prev => prev - 1);
+    }
+  };
   
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -609,17 +634,26 @@ export default function App() {
       <AnimatePresence>
         {isScannerOpen && (
           <Scanner 
-            onScan={async (data, image) => {
-              await addItem({
-                name: data.name,
-                category: data.category,
-                quantity: data.quantity,
-                imageUrl: image,
-                expiresAt: addDays(new Date(), data.suggestedExpiryDays).toISOString()
-              });
-            }} 
+            onCapture={processCapturedImage} 
             onClose={() => setIsScannerOpen(false)} 
           />
+        )}
+      </AnimatePresence>
+
+      {/* Processing Toast */}
+      <AnimatePresence>
+        {processingItems > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="fixed top-6 left-1/2 z-[100] flex items-center gap-3 bg-dark/90 text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/10 backdrop-blur-md"
+          >
+            <Loader2 className="animate-spin text-brand" size={18} strokeWidth={3} />
+            <span className="font-bold text-sm tracking-wide">
+              Analyzing {processingItems} item{processingItems !== 1 ? 's' : ''}...
+            </span>
+          </motion.div>
         )}
       </AnimatePresence>
 

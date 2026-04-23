@@ -1,19 +1,17 @@
 import React, { useRef, useState } from 'react';
-import { Camera, X, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { Camera, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { analyzeGroceryImage, ScannedGrocery } from '../services/geminiService';
 
 interface ScannerProps {
-  onScan: (data: ScannedGrocery, image: string) => Promise<void> | void;
+  onCapture: (base64Data: string, image: string) => void;
   onClose: () => void;
 }
 
-export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
+export const Scanner: React.FC<ScannerProps> = ({ onCapture, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flash, setFlash] = useState(false);
 
   const startCamera = async () => {
     try {
@@ -43,12 +41,11 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
   }, []);
 
   const captureImage = async () => {
-    if (!videoRef.current || !canvasRef.current || isAnalyzing) return;
+    if (!videoRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
     
-    // Fallback dimensions
     const width = video.videoWidth || 640;
     const height = video.videoHeight || 480;
     
@@ -66,36 +63,11 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
       return;
     }
 
-    setIsAnalyzing(true);
-    setError(null);
-
-    try {
-      const { data: result, error: analyzeError } = await analyzeGroceryImage(base64Data);
-
-      if (result) {
-        let timeoutId: NodeJS.Timeout;
-        try {
-          const scanPromise = onScan(result, fullImageData);
-          const timeoutPromise = new Promise<void>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error("Saving to database took too long. Please check your connection.")), 15000);
-          });
-          await Promise.race([scanPromise, timeoutPromise]);
-          onClose(); // Close on success
-        } catch (e: any) {
-          console.error("Save error:", e);
-          setError(e.message || "Failed to save item to database.");
-        } finally {
-          if (timeoutId!) clearTimeout(timeoutId);
-        }
-      } else {
-        setError(analyzeError || "Could not identify the item. Please ensure it's clearly visible and try again.");
-      }
-    } catch (err) {
-      console.error("Capture error:", err);
-      setError("An unexpected error occurred during analysis.");
-    } finally {
-      setIsAnalyzing(false);
-    }
+    onCapture(base64Data, fullImageData);
+    
+    // Show brief flash feedback
+    setFlash(true);
+    setTimeout(() => setFlash(false), 800);
   };
 
   return (
@@ -107,7 +79,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
     >
       <button 
         onClick={onClose}
-        className="absolute top-6 right-6 text-white/70 bg-white/10 hover:bg-white/20 hover:text-white rounded-full p-3 transition-colors"
+        className="absolute top-6 right-6 text-white/70 bg-white/10 hover:bg-white/20 hover:text-white rounded-full p-3 transition-colors z-[60]"
       >
         <X size={24} strokeWidth={2.5} />
       </button>
@@ -140,9 +112,9 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Scanner overlay box */}
-        {!isAnalyzing && !error && (
+        {!error && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="w-[70%] aspect-square border-2 border-white/40 rounded-3xl relative">
+            <div className="w-[70%] aspect-square border-2 border-white/40 rounded-3xl relative transition-transform duration-300">
               <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-3xl -mt-[2px] -ml-[2px]" />
               <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-3xl -mt-[2px] -mr-[2px]" />
               <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-3xl -mb-[2px] -ml-[2px]" />
@@ -151,29 +123,38 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
           </div>
         )}
 
-        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-dark/90 to-transparent">
+        {/* Snap Flash Indicator */}
+        <AnimatePresence>
+          {flash && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-brand/20 backdrop-blur-[2px] flex items-center justify-center z-10"
+            >
+               <motion.div 
+                 initial={{ y: 20 }}
+                 animate={{ y: 0 }}
+                 className="bg-brand text-white px-6 py-4 rounded-full flex items-center gap-3 font-bold shadow-2xl"
+               >
+                 <CheckCircle2 size={24} strokeWidth={3} />
+                 Added to Queue!
+               </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-dark/90 to-transparent z-20">
           <button
             onClick={captureImage}
-            disabled={isAnalyzing}
-            className="w-20 h-20 rounded-full bg-brand flex items-center justify-center hover:bg-brand-dark active:scale-[0.98] transition-all disabled:opacity-50 border-4 border-white/20"
+            className="w-20 h-20 rounded-full bg-brand flex items-center justify-center hover:bg-brand-dark active:scale-[0.9] transition-all border-4 border-white/20 shadow-xl"
           >
-            {isAnalyzing ? (
-              <Loader2 className="animate-spin text-white" size={32} strokeWidth={2.5} />
-            ) : (
-              <Camera size={32} className="text-white" strokeWidth={2.5} />
-            )}
+            <Camera size={32} className="text-white" strokeWidth={2.5} />
           </button>
         </div>
-
-        {isAnalyzing && (
-          <div className="absolute inset-0 bg-dark/70 backdrop-blur-sm flex flex-col items-center justify-center text-white p-8">
-            <Loader2 className="animate-spin mb-4 text-brand" size={48} strokeWidth={2.5} />
-            <p className="text-xl font-bold tracking-tight text-center">Scanning Item...</p>
-          </div>
-        )}
       </div>
 
-      <p className="mt-8 text-white font-medium bg-white/10 backdrop-blur-md rounded-full px-6 py-2.5 text-sm shadow-sm border border-white/10">Position item in the frame</p>
+      <p className="mt-8 text-white font-medium bg-white/10 backdrop-blur-md rounded-full px-6 py-2.5 text-sm shadow-sm border border-white/10">Position item & snap to queue</p>
     </motion.div>
   );
 };
