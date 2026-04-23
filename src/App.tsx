@@ -22,7 +22,8 @@ import {
   LogOut,
   Loader2,
   Mail,
-  Key
+  Key,
+  User as UserIcon // Imported specifically from lucide-react
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addDays, isPast, isBefore, differenceInDays } from 'date-fns';
@@ -42,6 +43,7 @@ import { Scanner } from './components/Scanner';
 import { ScannedGrocery } from './services/geminiService';
 import { auth, db, googleProvider } from './firebase';
 import { Logo } from './components/Logo';
+import { ProfileSettings } from './components/ProfileSettings';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -56,6 +58,7 @@ export default function App() {
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAddingManual, setIsAddingManual] = useState(false);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'fresh' | 'expiring' | 'expired'>('all');
 
@@ -399,11 +402,15 @@ export default function App() {
             </button>
             
             <button 
-              onClick={handleSignOut}
-              className="hidden md:flex p-2.5 text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors ml-1 border border-gray-200"
-              title="Sign out"
+              onClick={() => setIsProfileSettingsOpen(true)}
+              className="flex shrink-0 items-center justify-center w-[44px] h-[44px] bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors ml-1 border border-gray-200 overflow-hidden"
+              title="Profile Settings"
             >
-              <LogOut size={18} strokeWidth={2} />
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <UserIcon size={20} className="text-gray-500" strokeWidth={2.5} />
+              )}
             </button>
           </div>
         </div>
@@ -573,6 +580,20 @@ export default function App() {
               });
             }} 
             onClose={() => setIsScannerOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Profile Settings */}
+      <AnimatePresence>
+        {isProfileSettingsOpen && user && (
+          <ProfileSettings 
+            user={user} 
+            onClose={() => setIsProfileSettingsOpen(false)} 
+            onSignOut={() => {
+              setIsProfileSettingsOpen(false);
+              handleSignOut();
+            }} 
           />
         )}
       </AnimatePresence>
