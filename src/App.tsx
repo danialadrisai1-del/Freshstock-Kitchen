@@ -25,6 +25,7 @@ import {
   Key,
   Menu,
   Edit2,
+  Phone,
   User as UserIcon // Imported specifically from lucide-react
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -36,9 +37,18 @@ import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult
 } from 'firebase/auth';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
 
 import { GroceryItem } from './types';
 import { Scanner } from './components/Scanner';
@@ -52,9 +62,12 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'phone'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   
   const [items, setItems] = useState<GroceryItem[]>([]);
@@ -201,6 +214,68 @@ export default function App() {
     signOut(auth);
   };
 
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible'
+      });
+    }
+  };
+
+  const handleSendPhoneCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneNumber) {
+      setAuthError("Please enter your phone number.");
+      return;
+    }
+
+    setIsAuthSubmitting(true);
+    setAuthError(null);
+
+    try {
+      setupRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
+      setAuthSuccess("Verification code sent!");
+    } catch (error: any) {
+      console.error("Phone auth error: ", error);
+      if (error.code === 'auth/operation-not-allowed') {
+        setAuthError("Phone authentication is not enabled. Please enable it in your Firebase Console -> Authentication -> Sign-in methods.");
+      } else {
+        setAuthError(error.message || "Failed to send verification code. Ensure your phone number includes the country code (e.g., +1).");
+      }
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleVerifyPhoneCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationCode || !confirmationResult) {
+      setAuthError("Please enter the verification code.");
+      return;
+    }
+
+    setIsAuthSubmitting(true);
+    setAuthError(null);
+
+    try {
+      await confirmationResult.confirm(verificationCode);
+      // Successful sign in will trigger onAuthStateChanged
+    } catch (error: any) {
+      console.error("Code verification error: ", error);
+      setAuthError(error.message || "Invalid verification code.");
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
   const addItem = async (itemData: Partial<GroceryItem>) => {
     if (!user) throw new Error("No authenticated user.");
     
@@ -290,55 +365,120 @@ export default function App() {
           <h1 className="text-3xl font-bold tracking-tight leading-none mb-3 text-dark">FreshStock</h1>
           <p className="text-dark-muted mb-8 font-medium max-w-[260px] text-base">Your smart, beautifully organized kitchen inventory.</p>
 
-          <form onSubmit={handleEmailAuth} className="w-full space-y-4 mb-6">
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand transition-colors" size={20} strokeWidth={2} />
-              <input 
-                type="email"
-                placeholder="Email address"
-                required
-                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium placeholder:text-gray-400"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="relative group">
-              <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand transition-colors" size={20} strokeWidth={2} />
-              <input 
-                type="password"
-                placeholder="Password"
-                required
-                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium placeholder:text-gray-400"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            {authMode === 'login' && (
-              <div className="flex justify-end pr-2 pt-1">
-                <button 
-                  type="button" 
-                  onClick={handleForgotPassword}
-                  className="text-sm font-semibold text-brand hover:text-brand-dark transition-colors"
-                >
-                  Forgot password?
-                </button>
+          <div id="recaptcha-container"></div>
+
+          {(authMode === 'login' || authMode === 'register') && (
+            <form onSubmit={handleEmailAuth} className="w-full space-y-4 mb-6">
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand transition-colors" size={20} strokeWidth={2} />
+                <input 
+                  type="email"
+                  placeholder="Email address"
+                  required
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium placeholder:text-gray-400"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
-            )}
-            <button 
-              type="submit"
-              disabled={isAuthSubmitting}
-              className="w-full bg-brand text-white rounded-xl py-3.5 font-semibold text-lg hover:bg-brand-dark shadow-md shadow-brand/20 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 mt-2"
-            >
-              {isAuthSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin" size={22} />
-                  <span>{authMode === 'login' ? 'Logging in...' : 'Creating...'}</span>
-                </>
-              ) : (
-                <span>{authMode === 'login' ? 'Login' : 'Create Account'}</span>
+              <div className="relative group">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand transition-colors" size={20} strokeWidth={2} />
+                <input 
+                  type="password"
+                  placeholder="Password"
+                  required
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium placeholder:text-gray-400"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {authMode === 'login' && (
+                <div className="flex justify-end pr-2 pt-1">
+                  <button 
+                    type="button" 
+                    onClick={handleForgotPassword}
+                    className="text-sm font-semibold text-brand hover:text-brand-dark transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               )}
-            </button>
-          </form>
+              <button 
+                type="submit"
+                disabled={isAuthSubmitting}
+                className="w-full bg-brand text-white rounded-xl py-3.5 font-semibold text-lg hover:bg-brand-dark shadow-md shadow-brand/20 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 mt-2"
+              >
+                {isAuthSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={22} />
+                    <span>{authMode === 'login' ? 'Logging in...' : 'Creating...'}</span>
+                  </>
+                ) : (
+                  <span>{authMode === 'login' ? 'Login' : 'Create Account'}</span>
+                )}
+              </button>
+            </form>
+          )}
+
+          {authMode === 'phone' && !confirmationResult && (
+            <form onSubmit={handleSendPhoneCode} className="w-full space-y-4 mb-6">
+              <div className="relative group">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand transition-colors" size={20} strokeWidth={2} />
+                <input 
+                  type="tel"
+                  placeholder="Phone number (e.g. +1234567890)"
+                  required
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium placeholder:text-gray-400"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={isAuthSubmitting}
+                className="w-full bg-brand text-white rounded-xl py-3.5 font-semibold text-lg hover:bg-brand-dark shadow-md shadow-brand/20 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {isAuthSubmitting ? (
+                  <Loader2 className="animate-spin" size={22} />
+                ) : (
+                  <span>Send Code</span>
+                )}
+              </button>
+            </form>
+          )}
+
+          {authMode === 'phone' && confirmationResult && (
+            <form onSubmit={handleVerifyPhoneCode} className="w-full space-y-4 mb-6">
+              <div className="relative group">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand transition-colors" size={20} strokeWidth={2} />
+                <input 
+                  type="text"
+                  placeholder="Verification code"
+                  required
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all text-dark font-medium placeholder:text-gray-400 text-center tracking-[0.5em] text-xl"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={isAuthSubmitting}
+                className="w-full bg-brand text-white rounded-xl py-3.5 font-semibold text-lg hover:bg-brand-dark shadow-md shadow-brand/20 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {isAuthSubmitting ? (
+                  <Loader2 className="animate-spin" size={22} />
+                ) : (
+                  <span>Verify Code</span>
+                )}
+              </button>
+              <button 
+                type="button"
+                onClick={() => setConfirmationResult(null)}
+                className="w-full text-brand text-sm font-semibold hover:underline"
+              >
+                Change phone number
+              </button>
+            </form>
+          )}
 
           <div className="flex items-center gap-3 w-full mb-6">
             <div className="h-px bg-gray-200 flex-1"></div>
@@ -349,17 +489,33 @@ export default function App() {
           <button 
             type="button"
             onClick={handleSignIn}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-dark rounded-xl py-3.5 font-semibold hover:bg-gray-50 transition-all active:scale-[0.98] shadow-sm"
+            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-dark rounded-xl py-3.5 font-semibold hover:bg-gray-50 transition-all active:scale-[0.98] shadow-sm mb-3"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Continue with Google
           </button>
 
+          {authMode !== 'phone' && (
+            <button 
+              type="button"
+              onClick={() => {
+                setAuthMode('phone');
+                setAuthError(null);
+                setAuthSuccess(null);
+              }}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-dark rounded-xl py-3.5 font-semibold hover:bg-gray-50 transition-all active:scale-[0.98] shadow-sm mt-3"
+            >
+              <Phone size={20} className="text-gray-400" strokeWidth={2.5} />
+              Continue with Phone Number
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => {
-              setAuthMode(authMode === 'login' ? 'register' : 'login');
+              setAuthMode(prev => prev === 'login' ? 'register' : 'login');
               setAuthError(null);
+              setAuthSuccess(null);
             }}
             className="mt-6 text-sm font-semibold text-gray-500 hover:text-dark transition-colors"
           >
