@@ -1,31 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
   
-  --color-bg: #EAE8FC;
+  /* Modern Food App Palette */
+  --color-bg: #F9FAFB;
   --color-surface: #FFFFFF;
-  --color-dark: #121212;
-  --color-primary: #FF4911;
-  --color-secondary: #CCFF00;
-  --color-accent: #6C48F8;
+  --color-dark: #111827;
+  --color-dark-muted: #6B7280;
   
-  /* I'm reusing the existing variables but redirecting them to neo-brutalist values to save structural refactoring */
+  --color-brand: #10B981; /* Emerald Green */
+  --color-brand-dark: #059669;
+  --color-brand-light: #D1FAE5;
+  
+  --color-warning: #F59E0B; /* Amber */
+  --color-warning-light: #FEF3C7;
+  
+  --color-danger: #EF4444; /* Red */
+  --color-danger-light: #FEE2E2;
+
+  /* Aliasing old variables to new food app ones to smooth CSS transition in App.tsx */
   --color-paper: var(--color-bg);
   --color-ink: var(--color-dark);
-  --color-ink-muted: #666666;
-  --color-olive: var(--color-accent);
-  --color-olive-dark: #5027D1;
-  --color-olive-light: #9B82FA;
-  --color-terracotta: var(--color-primary);
+  --color-ink-muted: var(--color-dark-muted);
+  
+  --color-olive: var(--color-brand);
+  --color-olive-dark: var(--color-brand-dark);
+  --color-olive-light: var(--color-brand-light);
+  
+  --color-terracotta: var(--color-danger);
+  --color-primary: var(--color-danger); /* Replacing brutalist primary with red */
+  --color-secondary: var(--color-warning); /* Replacing brutalist secondary with amber */
+  --color-accent: var(--color-brand);
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-dark);
-  background-image: radial-gradient(#1212121a 2px, transparent 2px);
-  background-size: 24px 24px;
+  font-family: var(--font-sans);
 }

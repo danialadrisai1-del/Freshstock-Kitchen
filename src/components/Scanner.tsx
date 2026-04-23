@@ -80,19 +80,19 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 z-50 bg-dark/95 backdrop-blur-md flex flex-col items-center justify-center p-6"
     >
       <button 
         onClick={onClose}
-        className="absolute top-6 right-6 text-dark bg-surface border-[3px] border-dark rounded-xl p-2 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#121212] transition-all"
+        className="absolute top-6 right-6 text-white/70 bg-white/10 hover:bg-white/20 hover:text-white rounded-full p-3 transition-colors"
       >
-        <X size={28} strokeWidth={3} />
+        <X size={24} strokeWidth={2.5} />
       </button>
 
-      <div className="relative w-full max-w-md aspect-[3/4] bg-dark rounded-[2rem] overflow-hidden shadow-[8px_8px_0px_#121212] border-[3px] border-dark">
+      <div className="relative w-full max-w-sm aspect-[3/4] bg-dark-muted rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 ring-4 ring-white/5">
         {error ? (
-          <div className="absolute inset-0 flex items-center justify-center text-center p-8 bg-primary">
-            <p className="text-white font-black text-xl">{error}</p>
+          <div className="absolute inset-0 flex items-center justify-center text-center p-8 bg-red-500/20 text-red-100">
+            <p className="font-semibold">{error}</p>
           </div>
         ) : (
           <video 
@@ -105,29 +105,41 @@ export const Scanner: React.FC<ScannerProps> = ({ onScan, onClose }) => {
         
         <canvas ref={canvasRef} className="hidden" />
 
-        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-dark/90 via-dark/50 to-transparent">
+        {/* Scanner overlay box */}
+        {!isAnalyzing && !error && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="w-[70%] aspect-square border-2 border-white/40 rounded-3xl relative">
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-3xl -mt-[2px] -ml-[2px]" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-3xl -mt-[2px] -mr-[2px]" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-3xl -mb-[2px] -ml-[2px]" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-3xl -mb-[2px] -mr-[2px]" />
+            </div>
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-dark/90 to-transparent">
           <button
             onClick={captureImage}
             disabled={isAnalyzing}
-            className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center border-[3px] border-dark hover:-translate-y-1 hover:shadow-[4px_4px_0px_#121212] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50"
+            className="w-20 h-20 rounded-full bg-brand flex items-center justify-center hover:bg-brand-dark active:scale-[0.98] transition-all disabled:opacity-50 border-4 border-white/20"
           >
             {isAnalyzing ? (
-              <Loader2 className="animate-spin text-dark" size={32} strokeWidth={3} />
+              <Loader2 className="animate-spin text-white" size={32} strokeWidth={2.5} />
             ) : (
-              <Camera size={32} className="text-dark" strokeWidth={2.5} />
+              <Camera size={32} className="text-white" strokeWidth={2.5} />
             )}
           </button>
         </div>
 
         {isAnalyzing && (
-          <div className="absolute inset-0 bg-dark/80 backdrop-blur-sm flex flex-col items-center justify-center text-secondary p-8">
-            <Loader2 className="animate-spin mb-4" size={56} strokeWidth={3} />
-            <p className="text-2xl font-black font-sans uppercase tracking-tight text-center text-white">Identifying...</p>
+          <div className="absolute inset-0 bg-dark/70 backdrop-blur-sm flex flex-col items-center justify-center text-white p-8">
+            <Loader2 className="animate-spin mb-4 text-brand" size={48} strokeWidth={2.5} />
+            <p className="text-xl font-bold tracking-tight text-center">Scanning Item...</p>
           </div>
         )}
       </div>
 
-      <p className="mt-8 text-dark font-black tracking-widest uppercase text-sm border-2 border-dark rounded-full px-6 py-2 bg-white shadow-[2px_2px_0px_#121212]">Point camera at grocery item</p>
+      <p className="mt-8 text-white font-medium bg-white/10 backdrop-blur-md rounded-full px-6 py-2.5 text-sm shadow-sm border border-white/10">Position item in the frame</p>
     </motion.div>
   );
 };
