@@ -1,21 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-paper: #f4f1ea;
-  --color-surface: #ffffff;
-  --color-ink: #2f2a24;
-  --color-ink-muted: #756a5c;
-  --color-olive: #475a30;
-  --color-olive-dark: #374724;
-  --color-olive-light: #5d7540;
-  --color-terracotta: #c25e36;
+  --color-bg: #EAE8FC;
+  --color-surface: #FFFFFF;
+  --color-dark: #121212;
+  --color-primary: #FF4911;
+  --color-secondary: #CCFF00;
+  --color-accent: #6C48F8;
+  
+  /* I'm reusing the existing variables but redirecting them to neo-brutalist values to save structural refactoring */
+  --color-paper: var(--color-bg);
+  --color-ink: var(--color-dark);
+  --color-ink-muted: #666666;
+  --color-olive: var(--color-accent);
+  --color-olive-dark: #5027D1;
+  --color-olive-light: #9B82FA;
+  --color-terracotta: var(--color-primary);
 }
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
+  background-color: var(--color-bg);
+  color: var(--color-dark);
+  background-image: radial-gradient(#1212121a 2px, transparent 2px);
+  background-size: 24px 24px;
 }
