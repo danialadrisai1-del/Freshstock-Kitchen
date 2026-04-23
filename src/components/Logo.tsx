@@ -12,39 +12,41 @@ export const Logo: React.FC<LogoProps> = ({ className = "", size = 48 }) => {
         viewBox="0 0 120 120"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-sm"
+        className="w-full h-full drop-shadow-md"
       >
-        {/* Background rounded squircle */}
+        {/* Premium Superellipse Background */}
+        <rect width="120" height="120" rx="34" fill="url(#primaryGradient)" />
+        
+        {/* Background Stack / Open Box Flap */}
+        <rect x="34" y="36" width="52" height="30" rx="10" fill="#FFD0C2" />
+        
+        {/* Foreground Box Base */}
+        <rect x="24" y="52" width="72" height="46" rx="14" fill="white" />
+        
+        {/* Inside dashboard details (lines to signify inventory list) */}
+        <rect x="40" y="68" width="24" height="8" rx="4" fill="#FF4713" opacity="0.12" />
+        <rect x="40" y="80" width="40" height="8" rx="4" fill="#FF4713" opacity="0.12" />
+        
+        {/* Fresh Produce popping out (Orange / Fruit Abstract) */}
+        <circle cx="60" cy="50" r="16" fill="#FF4713" stroke="white" strokeWidth="6" />
+        
+        {/* Fresh Leaf on top of the fruit */}
         <path 
-          d="M60 0 C 120 0 120 120 60 120 C 0 120 0 0 60 0 Z" 
-          fill="url(#brandGradient2)"
-        />
-        
-        {/* Modern Pantry / Basket Abstraction */}
-        <path d="M35 50 C 35 45 40 40 45 40 H 75 C 80 40 85 45 85 50 V 80 C 85 85 80 90 75 90 H 45 C 40 90 35 85 35 80 V 50 Z" fill="white" />
-        
-        {/* Inner geometric accent (like an item in the box) */}
-        <circle cx="50" cy="55" r="5" fill="#10B981" />
-        <rect x="60" y="50" width="10" height="25" rx="5" fill="#34D399" />
-        
-        {/* Sweeping Leaf across the top */}
-        <path 
-          d="M 60 40 C 60 20 85 20 85 20 C 85 20 85 45 65 45 M 65 45 C 55 45 50 40 60 40 Z" 
-          fill="#D1FAE5"
-          className="origin-center"
+          d="M 58 32 C 58 20 74 18 74 18 C 74 18 74 28 64 34 Z" 
+          fill="white" 
         />
 
         <defs>
           <linearGradient
-            id="brandGradient2"
-            x1="10"
-            y1="10"
-            x2="110"
-            y2="110"
+            id="primaryGradient"
+            x1="0"
+            y1="0"
+            x2="120"
+            y2="120"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stopColor="#059669" /> {/* text-emerald-600 */}
-            <stop offset="1" stopColor="#022C22" /> {/* text-emerald-950 */}
+            <stop stopColor="#FF7A4D" />
+            <stop offset="1" stopColor="#D82900" />
           </linearGradient>
         </defs>
       </svg>

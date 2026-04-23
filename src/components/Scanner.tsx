@@ -144,17 +144,17 @@ export const Scanner: React.FC<ScannerProps> = ({ onCapture, onClose }) => {
           )}
         </AnimatePresence>
 
-        <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-dark/90 to-transparent z-20">
+          <div className="absolute inset-x-0 bottom-0 p-8 flex justify-center bg-gradient-to-t from-dark/90 to-transparent z-20">
           <button
             onClick={captureImage}
-            className="w-20 h-20 rounded-full bg-brand flex items-center justify-center hover:bg-brand-dark active:scale-[0.9] transition-all border-4 border-white/20 shadow-xl"
+            className="w-20 h-20 rounded-full bg-brand flex items-center justify-center hover:bg-brand-dark active:scale-[0.8] transition-all border-4 border-white shadow-[0_0_40px_rgba(255,71,19,0.5)]"
           >
             <Camera size={32} className="text-white" strokeWidth={2.5} />
           </button>
         </div>
       </div>
 
-      <p className="mt-8 text-white font-medium bg-white/10 backdrop-blur-md rounded-full px-6 py-2.5 text-sm shadow-sm border border-white/10">Position item & snap to queue</p>
+      <p className="mt-8 text-white font-bold bg-white/10 backdrop-blur-md rounded-full px-6 py-3 text-sm shadow-sm border border-white/10">Position item & snap to queue</p>
     </motion.div>
   );
 };
